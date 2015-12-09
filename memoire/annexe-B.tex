@@ -1,0 +1,104 @@
+
+
+
+\chapter{Les difficult\'es rencontr\'ees}
+\label{annexe:C}
+
+\section{Librairie Mor\'e, Garbow et Hillstrom}
+
+
+Sur le site de netlib\footnote{\url{http://www.netlib.org}}, on peut retrouver plusieurs librairies \'ecrites en fortran.
+Celle qui nous int\'eresse se trouve plus pr\'ecis\'ement dans les probl\`emes sans contraintes\footnote{\url{http://www.netlib.org/uncon/data/}}.
+
+
+Pour faciliter l'utilisation de tapenade, les fichiers sources ont dû être modifi\'es.
+Tout d'abord, j'ai nomm\'e les fonctions par leur nom (\`a la place de {\tt getfun}) pour pouvoir avoir un appel
+unique \`a la routine. J'ai remplac\'e tous les appels \`a la fonction {\tt ddot} par les op\'erations 
+qu'effectue cette routine (produit scalaire). 
+Il arrive qu'au lieu de passer un vecteur en argument, on donne un scalaire : {\tt g(j) = ddot( m, fj( 1, j), 1, f, 1)} l.155
+ dans rose.f par exemple, ce qui a pour effet de multiplier la $j$\`eme colonne de {\tt fj} par {\tt f}. Cependant, Tapenade ne peut analyser
+ce code pour le diff\'erentier parce qu'il s'agit d'une astuce sur l'incr\'ementation de {\tt fj(1,j)} qui donne {\tt fj(2,j)} ce qui est 
+propre au fonctionnement interne de Fortran.
+
+
+
+
+De plus, certains param\`etres ne sont initialis\'es que pour le mode $-1$ lors de l'appel \`a la fonction or 
+ces param\`etres sont utilis\'es pour les autres modes. J'ai donc rajout\'e cette initialisation au d\'ebut de 
+la fonction. Par exemple {\tt nqrtr  = 1} au d\'ebut sing.f.
+
+
+
+
+
+\begin{itemize}
+\item Changement du nom des routines getfun par le nom de la fonction (celui du fichier)
+\item Remplacement des ddot par la somme des carr\'es
+\item Remplacement des dcopy par copie \'el\'ements par \'el\'ements
+\item Rajout des initialisations des param\`etres qui le sont uniquement dans le mode $-1$
+\item parameter (one = 1.d0) n'est pas d\'efini dans badscp.f !! 
+\item Rajout de {\tt ftf=0d0} pour \'eviter d'additionner les valeurs lorsque l'on fait plusieurs appels
+\end{itemize}
+
+L'ensemble de ces modifications peut être retrouv\'e dans le script {\tt make}.
+
+
+
+
+
+\section{M\'ethodes d'ordres sup\'erieurs}
+
+Comme le montre le tableau suivant, le point initial a une grande importance dans l'ex\'ecution des m\'ethodes. 
+En choisissant un point al\'eatoire, il y a moins de chance pour que les algorithmes convergent vers le même point. D'autre part,
+la convergence n'est pas garantie.
+
+\begin{table}%[h]
+	\begin{center}
+{\small
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Si la m\'ethode de Chebychev n'est pas une direction de Descente 
+%on la garde quand meme!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+\begin{tabular}{|l|c|c|c|c|c|c|}
+  \hline fonction & $n$ & Iter Newton & Iter Cheb & temps Newton & temps Cheby & Norme diff \\
+ \hline
+   rose& 2 & 77 & 5 & 0.075 & 0.004 & 0.000000 \\\hline
+   froth& 2 & 17 & 12 & 0.015 & 0.011 & 0.000000 \\\hline
+   badscp& 2 & $19^*$ & 999 & 0.104 & 5.140 & 73081.313391 \\\hline
+   badscb& 2 & 18 & 999 & 0.024 & 5.814 & 999915.027828 \\\hline
+   beale& 2 & $14^*$ & 999 & 0.074 & 4.536 & 28470.397921 \\\hline
+   jensam& 2 & 1 & 1 & 0.001 & 0.002 & Nan \\\hline
+   helix& 3 & 14 & 10 & 0.013 & 0.014 & 0.000000 \\\hline
+   bard& 3 & 9 & 2 & 0.009 & 0.002 & Nan \\\hline
+   gauss& 3 & 1 & 1 & 0.001 & 0.001 & 0.000000 \\\hline
+   meyer& 3 & $271^*$ & 999 & 0.302 & 6.159 & 6168.587560 \\\hline
+   gulf& 3 & 1 & 1 & 0.001 & 0.001 & 0.000000 \\\hline
+   box& 3 & 21 & 6 & 0.021 & 0.016 & Nan \\\hline
+   sing& 4 & 26 & 19 & 0.024 & 0.017 & 0.000136 \\\hline
+   wood& 4 & 27 & 21 & 0.025 & 0.024 & 0.000000 \\\hline
+   kowosb& 4 & 230 & 2 & 0.221 & 0.003 & Nan \\\hline
+   bd& 4 & 13 & 12 & 0.013 & 0.011 & 0.000000 \\\hline
+   rosex& 10 & 203 & 5 & 0.207 & 0.005 & 0.000000 \\\hline
+   singx& 12 & 30 & 24 & 0.030 & 0.023 & 0.000553 \\\hline
+   pen1& 4 & 42 & 30 & 0.038 & 0.027 & 0.000000 \\\hline
+   vardim& 10 & 26 & 19 & 0.025 & 0.018 & 0.000000 \\\hline
+   trig& 10 & 20 & 2 & 0.023 & 0.027 & Nan \\\hline
+   almost& 10 & 25 & 28 & 0.078 & 0.297 & Nan \\\hline
+   bv& 10 & 22 & 999 & 0.022 & 5.438 & 185.331743 \\\hline
+   ie& 10 & 21 & 17 & 0.025 & 0.029 & 0.000000 \\\hline
+   band& 10 & 31 & 25 & 0.033 & 0.034 & 0.000000 \\\hline
+   cheb& 10 & 167 & 999 & 0.208 & 5.010 & 1.674059 \\\hline
+   ie & 100 & 89 & 360 & 2.251 & 11.208 & 0.000000 \\\hline 
+   ie& 200 & 177 & 234 & 27.493 & 39.950 & 0.000000 \\\hline
+   trig& 100 & 46 & 45 & 0.340 & 0.343 & 0.069866 \\\hline 
+   trig& 250 & 61 & 58 & 2.104 & 2.114 & 14217.789748 \\\hline  
+   trig& 350 & 61 & 65 & 4.270 & 4.700 & 0.022663 \\\hline  
+   bv& 500 & 20 & 16 & 1.172 & 1.016 & 0.0066708 \\\hline
+   bv& 1 & 19 & 15 & 5.404 & 4.585 &  0.1489379 \\\hline
+   bv& 1500 & 17 & 14 & 10.86 & 9.613 & 12.905217 \\\hline
+   bv& 2 & 17 & 13 & 19.097 & 15.863 & 17.806732 \\\hline
+\end{tabular}
+}
+	\end{center}
+	\caption{Nombre d'it\'eration des m\'ethodes de Newton et Chebychev mais sur un point initial loin de la 
+solution. Les algorithmes convergent rarement au même point.}
+	\label{tab:111}
+\end{table}

@@ -1,0 +1,60 @@
+\chapter{Premi\`ere annexe}
+\label{annexe:A}
+
+
+\section{D\'efinitions}
+\label{annexe:A:def}
+
+\begin{frdefinition}\textbf {(Fonction continue)} \\
+Soient $f:X\subseteq\mathbb{R}^n\rightarrow\mathbb{R}^m$ et $x_0\in X$. La fonction f est continue en $x_0$ 
+si et seulement si
+ $$\lim_{x\rightarrow x_0} f(x)=f(x_0)$$
+c'est-\`a-dire que si, pour tout $\epsilon \in \mathbb{R}$, $\epsilon>0$, il existe $\eta>0$ tel que 
+$$\lVert x-x_0\rVert < \eta \text{ et } x \in X \Rightarrow \lVert f(x)-f(x_0)\rVert < \epsilon$$
+\end{frdefinition}
+
+
+\begin{frdefinition}\textbf {(Valeurs et vecteurs propres)} \\
+Soit une matrice carr\'ee $M\in \mathbb{R}^{n\times n}$. Les valeurs propres de $A$ sont les racines 
+de son polyn\^ome caract\'eristique
+$$p_M(z)=\det(zI-M)$$
+o\`u $I$ est la matrice identit\'e de dimension $n$. Si $\lambda$ est une valeur propre de $A$, les vecteurs
+$x\in \mathbb{R}^n$ non nuls tels que $$ Mx=\lambda x$$
+sont appel\'es vecteurs propres.
+\end{frdefinition}
+
+
+\begin{frdefinition}\textbf {(Matrice d\'efinie positive)} \\
+Une matrice carr\'ee $A \in \mathbb{R}^{n\times n}$ est dite d\'efinie lorsque \\
+$$x^TAx>0, \ \forall x\in \mathbb{R}^n, \ x\neq 0$$
+si de plus $A$ est sym\'etrique, toutes ses valeurs propres sont strictement positives. 
+\end{frdefinition}
+
+
+
+\begin{frdefinition}\textbf {(Matrice bande)} \\
+Une matrice carr\'ee $A \in \mathbb{R}^{n\times n}$ est dite matrice bande si tout ses \'el\'ements 
+en dehors de la bande diagonale born\'ee par deux constantes $k_1$ et $k_2$ sont nuls:
+\begin{equation*}
+ a_{ij}=0 \text{  si  }  j < i-k_1 \text{  ou  } j >i+k_2, \ k_1,k_2 \geq 0 
+\end{equation*}
+
+
+
+\end{frdefinition}
+
+
+
+
+
+\begin{frdefinition}\textbf {(Fonction lipschitzienne)} \\
+Soit $I$ un intervalle de $\mathbb{R}$ non vide et non r\'eduit \`a un point et 
+$f:I\rightarrow \mathbb{R}$ une application alors on dit que f est 
+$k$-lipschitzienne s'il existe un $k$ r\'eel strictement positif tel que
+\begin{equation}
+ \forall (x,y)\in I^2, |f(x)-f(y)|\leq k|x-y|
+\end{equation}
+La constante k est dite constante de Lipschitz.
+\end{frdefinition}
+
+

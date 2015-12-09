@@ -1,0 +1,5 @@
+temps13.dat # sur une boucle de 10 trigonométrique non modifié ==  n ftf - mode inverse - _b_d - _b_d_d
+temps14.dat # sur une boucle de 10 trigonométrique modifié ==  n ftf - mode inverse - _b_d - _b_d_d
+temps15.png 
+
+

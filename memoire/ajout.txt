@@ -1,0 +1,6 @@
+Nous définirons d'abord de manière général un type d'algorithmes d'optimisation à l'aide des directions suffisamment descendante. Leurs caractéristiques seront analysées pour modifier des méthodes de type Newton afin d'avoir une meilleure fiabilité de convergence. 
+Puis nous présenterons le fonctionnement de la différentiation automatique et en quoi c'en est un outil indispensable à ce genre de méthodes.
+Puis, nous expliquerons pourquoi nous avons choisi l'outil Tapenade pour l'outil de différentiation automatique et la librairie de Moré, Garbow, Hilstrom pour la collection de fonctions tests.
+
+Enfin, nous analyserons d'une part le temps d'exécution pour chacun des calculs critiques de ces méthodes ; le calcul du gradient, du hessien, la décomposition de Cholesky puis le temps de calcul des méthodes proprement dites.
+

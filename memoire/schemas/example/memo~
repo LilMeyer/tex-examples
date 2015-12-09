@@ -1,0 +1,2 @@
+pdflatex -jobname main-figure0 main
+pdflatex -jobname main-figure1 main

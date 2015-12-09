@@ -1,0 +1,38 @@
+compilation :
+pdflatex -jobname main-figure main
+
+
+
+
+
+entete :
+
+
+
+\documentclass[12pt] {article}
+\usepackage[T1]{fontenc}
+\usepackage[x11names, rgb]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{automata,arrows,er,external,fit,positioning,snakes,shapes,trees}
+\usetikzlibrary{external}
+
+\tikzexternalize{main}
+
+
+\begin{document}
+
+\begin{tikzpicture}
+
+
+\end{tikzpicture}
+
+\end{document} 
+
+
+
+
+Pour inclure un fichier sans utiliser les packages pgf
+
+    
+    \beginpgfgraphicnamed{figure_0}
+    \endpgfgraphicnamed

@@ -1,0 +1,363 @@
+
+
+%!TEX TS-program = latex
+\documentclass[caractereUtf,maitrise]{style/scienceUdeS}
+
+\long\def\beginpgfgraphicnamed#1#2\endpgfgraphicnamed{\includegraphics{#1}}
+
+
+\usepackage{array}
+% Pour inclure des sch\'emas en format pdf avec la commande
+% \beginpgfgraphicnamed{figure_0}
+% \endpgfgraphicnamed
+% Voir pgfmanual \'a la page 654 pour plus d'information
+
+% \usepackage{program}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage[pdftex]{color}
+
+
+
+
+%% Gabarit pour maitrise et pour maitrise GL
+%%
+%% Version 2010/08/11 v1.8
+%%
+%% Benoit Fraikin
+%% Faculte des Sciences
+%% Universite de Sherbrooke
+%% Sherbrooke (Quebec), Canada
+
+% =========================================== Options principales
+% - bibliothequeNationale : pr\'esente le document pour la copie de la 
+%   biblioth\`eque nationale. Attention, certaines commandes ne
+%   fonctionnent plus.
+%
+% - caractereUtf : active les caract\`eres cod\'es en UTF8 au lieu du latin1
+% - caractereLatin : active les caract\`eres cod\'es en latin1 au lieu du UTF8
+%
+% - logopdflatex : utilise le logo de l'universit\'e en pdf, pour ceux 
+%   qui utilise pdflatex et non latex.
+%
+% - pasDeFigure : le document ne contient pas de figure (\begin{figure})
+% - pasDeTableau : le document ne contient pas de tableau (\begin{table})
+% - pasDeListing : le document ne contient pas de listing (\begin{lstlisting})
+%
+% - maitrise : pour une ma\^itrise en informatique
+% - maitriseGL : pour une ma\^itrise en g\'enie logiciel
+%                (ne diff\`ere pas de l'option "maitrise" pour l'instant)
+% - these : pour une these de doctorat
+% =========================================== Options secondaires
+% - hypertexte
+% - rectoverso
+% - simpleface
+% - draft
+% - final
+%=================================================================
+% \newcommand{\co}{\color{blue}}
+
+\newcommand{\co}{}
+
+
+\begin{document}
+%====================== DEBUT DU DOCUMENT ========================
+\modeFrancais
+% \include{contenu_maitrise/debut}
+
+\newtheorem{frtheoreme}{Th\'eor\`eme}[section]
+\newtheorem{frlemme}[frtheoreme]{Lemme}
+\newtheorem{frprop}[frtheoreme]{Proposition}
+\newtheorem{frcoro}[frtheoreme]{Corollaire}
+\newtheorem{frdefinition}{D\'efinition}[section]
+
+
+\auteur{Romain Cotte}
+\titre{L'enjeu de la diff\'erentiation automatique dans les m\'ethodes de Newton d'ordres sup\'erieurs}
+
+
+\MotsCles{diff\'erentiation automatique; Tapenade; optimisation; m\'ethode de Newton; ordres sup\'erieurs.}
+
+% DESCRIPTION DU SOMMAIRE (EN FRANCAIS) -----------
+\sommaire{
+Les m\'ethodes plus avanc\'ees d'optimisation avec ou sans contraintes n\'ecessitent le calcul des d\'eriv\'ees
+de la fonction. En ce sens, la diff\'erentiation automatique est devenu un outil primordial.
+ Malgr\'e le fait qu'il soit omnipr\'esent, cet outil est encore en d\'eveloppement et en recherche. Il ne pr\'esente
+pas les inconv\'enients classiques des m\'ethodes habituelles de d\'erivation mais reste complexe 
+\`a utiliser. Ce travail consiste \`a utiliser un outil de diff\'erentiation permettant de calculer des d\'eriv\'ees 
+d'ordres sup\'erieurs afin d'obtenir des directions am\'elior\'ees.
+Nous d\'efinirons d'abord de mani\`ere g\'en\'erale un type d'algorithme d'optimisation \`a l'aide des directions suffisamment
+ descendantes. Leurs caract\'eristiques seront analys\'ees pour modifier des m\'ethodes de type Newton afin d'avoir une
+ meilleure fiabilit\'e de convergence. Nous \'etudierons les op\'erations critiques et l'ordre du coût de ces m\'ethodes\\
+Dans une deuxi\`eme partie, nous verrons les calculs d'alg\`ebre lin\'eaire requis pour nos algorithmes
+Ensuite, nous pr\'esenterons le fonctionnement de la diff\'erentiation automatique et en quoi c'en est un outil indispensable
+ \`a ce genre de m\'ethodes.
+Puis, nous expliquerons pourquoi nous avons choisi l'outil Tapenade pour la diff\'erentiation automatique et
+ la librairie de Mor\'e, Garbow, Hillstrom pour la collection de fonctions tests.
+Enfin, nous comparerons les m\'ethodes de types Newton.
+}
+
+% REMERCIEMENTS -----------------------------------
+\remerciements{Je souhaite exprimer mes sinc\`eres remerciements \`a mon directeur de recherche, Jean-Pierre Dussault, qui 
+a toujours \'et\'e disponible pour moi. Son aide m'a \'et\'e particuli\`erement pr\'ecieuse et m'a fait progresser pour aller de l'avant. C'est 
+aussi une personne avec un cot\'e humain tr\`es agr\'eable et avec qui il a \'et\'e tr\`es int\'eressant et plaisant de travailler. \\
+Ensuite, je voudrais remercier mes deux colocataires, Emmanuelle Meunier et Maggie Poudrier, qui furent tr\`es accueillantes et
+chaleureuses. Elles m'ont fait d\'ecouvrir la r\'egion du Qu\'ebec et sont \`a l'image de ce que sont beaucoup de gens ici. \\
+Je voudrais surtout remercier mes parents qui m'ont toujours soutenu dans mes \'etudes et qui me soutiendraient dans n'importe quel voie.
+Enfin, je remercie Martin Guay, pour ses conseils et son soutient.
+}
+
+% LISTE DES ABREVIATIONS --------------------------
+\abreviations{
+  \begin{description}
+  \item[AMPL] {\it A Mathematical Programming Language}
+  \item[BK] {\it Bunch-Kaufman}
+  \item[CUTEr] {\it A Constrained and Unconstrained Testing Environment, revisited}
+  \item[DA] Diff\'erentiation Automatique
+  \item[DED] Demi Espace de Diminution
+  \item[GAO] Graphe Acyclique Orient\'e
+  \item[INRIA] Institut National de Recherche en Informatique et en Automatique
+  \item[LAPACK] {\it Linear Algebra PACKage}
+  \item[MGH] {\it Mor\'e, Garbow et Hilstrom}
+  \item[NaN] {\it Not a Number}
+  \item[RA] {\it Recompute-All} Tout recalculer
+  \item[SA] {\it Store-All} Tout stocker
+  \item[SIF] {\it Standard Input Format}
+  \end{description}
+  \begin{description}
+  \item[.]$M$ caract\`ere en majuscule pour les matrices
+  \item[.]$c$ en minuscule pour les vecteurs colonnes
+%$c=\left( \begin{array}{c}c_1\\c_2\\ \vdots  \\c_n\end{array}\right) $\\
+  \item[.]$c^T$ la transpos\'ee : $c^T= \left( \begin{array}{cccc}c_1 & c_2 & \hdots  & c_n\end{array}\right) $
+  \item[.]$\nabla f(x)$ le gradient de $f$ en $x$ : $\nabla f(x):\mathbb{R}^n\rightarrow \mathbb{R}$ une matrice ligne\\
+$\nabla f(x)=
+\left( \begin{array}{cccc} \frac{\partial f}{\partial x_1}& \frac{\partial f}{\partial x_2} 
+ & \hdots  &\frac{\partial f}{\partial x_n}\end{array}\right)$ \\
+$F(x)^T:=\nabla f(x) $
+
+  \item[.]$\nabla^2 f(x)$ $: \mathbb{R}^n\rightarrow \mathbb{R}^n$ le hessien de la fonction.\\
+$\nabla^2 f(x)= \left( \begin{array}{ccc}
+ \frac{\partial^2 f}{\partial x_1\partial x_1} & \hdots & \frac{\partial^2 f}{\partial x_1\partial x_n}\\
+ \vdots &  & \vdots \\
+  \frac{\partial^2 f}{\partial x_n\partial x_1} & \hdots & \frac{\partial^2 f}{\partial x_n\partial x_1}
+\end{array}
+\right)$ sym\'etrique
+ \item[.]$\#(f)$ correspond au coût de l'\'evaluation de $f$
+ \item[.]{\tt [ ]} correspond \`a la liste vide
+ \item[.]{\tt [$a$]} la liste compos\'ee d'un \'el\'ement : $a$
+ \item[.]$::$ op\'erateur de contructeur de liste {\tt $a::$[ ]$=$[$a$], $t::\bar{q}$} o\`u $t$ est un \'el\'ement et $\bar{q}$ est une liste
+ \item[.]$\lVert v\rVert=\lVert v\rVert_{2}=\sqrt{\sum_{i=1}^{n}v_i^2}=\sqrt{v^Tv}$
+ \item[.]{\tt >\$} correspond au prompt bash sous unix
+ \item[.] \verb!--->! correspond \`a {\it Scilab}
+ \item[.] $\neg$ non logique
+ 
+
+  \end{description}
+}
+
+%=================================================================
+\modeFrancais{}
+\enteteDeLaThese{}
+\renewcommand{\chaptermark}[1]{\markboth{\textsc{\chaptername\ \thechapter.\ #1}}{}}
+\renewcommand{\sectionmark}[1]{\markright{\textsc{\thesection. #1}}	}
+    
+%========================== INTRODUCTION ===========================
+
+\modeFrancais{}
+% \include{contenu_maitrise/introduction}
+\Introduction
+
+
+C'est par une repr\'esentation math\'ematique d'un ph\'enom\`ene physique, \'economique, humain que la programmation math\'ematique cherche \`a trouver
+un optimum, c'est-\`a-dire l'\'etat jug\'e le meilleur ou le plus favorable \`a un probl\`eme. Plus pr\'ecis\'ement, la programmation non-lin\'eaire
+est une m\'ethode permettant de r\'esoudre des \'equations et in\'equations qui g\'en\'eralement mod\'elisent le ph\'enom\`ene de notre mod\`ele.
+Le but est de calculer un point minimisant (ou maximisant) une fonction objectif. Le probl\`eme peut être soumis \`a un ensemble de contraintes,
+ce qui aura pour effet de r\'eduire le domaine de r\'ealisabilit\'e.
+L'\'etude faite dans ce texte se limite \`a la programmation non-lin\'eaire sans contraintes. 
+{\co 
+Nous allons voir qu'il existe de nouveaux types d'algorithmes bas\'es sur celui de Newton. Ils b\'en\'eficient d'un meilleur ordre de convergence,
+n\'eanmoins les calculs requis pour chaque it\'eration sont plus pouss\'es; calculs de d\'eriv\'ees d'ordre sup\'erieur.
+ Ce travail consiste \`a utiliser les progr\`es de la Diff\'erentiation Automatique (DA) afin d'observer si le compromis entre l'ordre de convergence
+et le temps de calcul est raisonnable.
+ Le calcul de d\'eriv\'ees est un domaine complexe, d'autant plus que nous avons besoin d'efficacit\'e et de pr\'ecision d'une part et de pouvoir automatiser
+ces calculs d'autre part.
+Ainsi, l'outil de DA semble un outil id\'eal car contrairement aux diff\'erences finies, il est capable de fournir
+le gradient de notre fonction \`a un coût proportionnel \`a l'\'evaluation de la fonction donc \`a un coût raisonnable. Par exemple, en grande dimension,
+ de l'ordre de $10000$, alors qu'il faut plusieurs secondes pour obtenir le gradient par diff\'erences finies, la DA est capable de le calculer
+ presque instantan\'ement ($\leq 4ms$). Bien qu'il soit encore en constant progr\`es, il a d\'ej\`a fait ses preuves
+et est largement utilis\'e en optimisation comme avec le langage AMPL {\it A Mathematical Programming Language}.  
+Un outil de DA a \'et\'e \'elabor\'e ({\it Sciad}) par Benoit Hamelin, et une estimation des coûts de calcul a \'et\'e faite 
+par d\'ecompte du nombre d'op\'erations. Cependant, il n'est pas exploitable pour des grandes dimensions ($\geq 5$).
+Nous allons d\'evelopper un environnement d'exp\'erimenation efficace au sein de {\it Scilab} afin de comparer les m\'ethodes d'optimisation
+grâce \`a la DA qui concr\'etise les progr\`es pr\'ec\'edents en termes de temps de calcul.
+Cet outil nous permettra d'atteindre des d\'eriv\'ees sup\'erieures. Cela ouvre la voie \`a de nouvelles m\'ethodes que nous 
+allons tester. 
+
+Dans une premi\`ere partie nous introduirons le probl\`eme d'optimisation, les m\'ethodes de descentes et leur complexit\'e parall\`element \`a leur ordre de convergence.
+Ensuite, nous \'etudierons les op\'erations critiques; la r\'esolution de syst\`emes lin\'eaire d'une part et le calcul des d\'eriv\'ees d'autre part. Par cons\'equent, 
+nous pr\'esenterons le fonctionnement de la DA avec deux modes d'ex\'ecution, le mode direct et le mode inverse qui ont diff\'erentes complexit\'es. Puis,
+apr\`es avoir d\'etaill\'e les outils avec les r\'esultats obtenus nous comparerons les m\'ethodes d'ordres sup\'erieurs en terme d'it\'erations et de temps de calculs.
+
+}
+
+
+% Un article par chapitre
+%=========================== CHAPITRE 1 ============================
+\modeFrancais{}
+\chapter[Algorithmes pour l'optimisation sans contraintes] 
+        {\singlespacing%
+         Algorithmes pour l'optimisation sans contraintes}
+         \label{ch:chapitre-1}
+\include{chapitre-1} % fichier chapitre-1.tex
+
+%=========================== CHAPITRE 2 ============================
+\modeFrancais{}
+\chapter[Calculs d'alg\`ebre lin\'eaire : inversion du hessien] 
+        {\singlespacing%
+         Calculs d'alg\`ebre lin\'eaire : inversion du hessien}
+         \label{ch:chapitre-2}
+\include{chapitre-2} % fichier chapitre-2.tex
+% 
+
+%=========================== CHAPITRE 3 ============================
+\modeFrancais{}
+\chapter[Obtention des d\'eriv\'ees : Diff\'erentiation automatique] 
+        {\singlespacing%
+         Obtention des d\'eriv\'ees : Diff\'erentiation automatique}
+         \label{ch:chapitre-3}
+\include{chapitre-3} % fichier chapitre-3.tex
+% Les choix d'impl\'ementations des op\'erations critiques
+%=========================== CHAPITRE 4 ============================
+
+
+\modeFrancais{}
+\chapter[Les outils utilis\'es] 
+        {\singlespacing%
+         Les outils utilis\'es}
+         \label{ch:chapitre-4}
+\include{chapitre-4} % fichier chapitre-3.tex
+% Les choix d'impl\'ementations des op\'erations critiques
+
+%=========================== CHAPITRE 5 ============================
+\modeFrancais{}
+\chapter[Comparaison des m\'ethodes d'ordres sup\'erieurs] 
+        {\singlespacing%
+         Comparaison des m\'ethodes de type Newton et d'ordres sup\'erieurs}
+         \label{ch:chapitre-5}
+\include{chapitre-5} % fichier chapitre-4.tex
+
+\modeFrancais{}
+% \include{contenu_maitrise/conclusion}
+\Conclusion
+
+Nous avons r\'eussi \`a d\'evelopper un environnement au sein de {\it Scilab}, grâce \`a une interface avec 
+fortran, nous permettant d'obtenir les d\'eriv\'ees d'ordres sup\'erieurs de la librairie de Mor\'e, Garbow, Hilstrom.
+Le logiciel Tapenade a \'et\'e adapt\'e pour fournir ces d\'eriv\'ees de mani\`ere efficace, y compris l'ordre trois alors 
+qu'il n'est pas conçu pour le faire en mode inverse.
+D'autre part, la g\'en\'ericit\'e des fonctions de la librairie de MGH a permis une automatisation de la g\'en\'eration des codes 
+diff\'erenti\'es. \'Etant donn\'e que ces fonctions ont toutes les mêmes arguments, la diff\'erentiation se fait toujours par rapport 
+aux mêmes variables. Ainsi, pour automatiser le traitement et la g\'en\'eration des codes diff\'erenti\'es, il suffit
+d'avoir des fonctions ayant les mêmes param\`etres.
+Enfin, grâce \`a cet environnement nous avons impl\'ement\'e des m\'ethodes efficaces notamment avec 
+une d\'ecomposition de Cholesky modifi\'ee
+provenant de la librairie {\it Fortran} LAPACK pour la r\'esolution des syst\`emes lin\'eaires.
+Ainsi, plusieurs m\'ethodes ont pu être test\'ees, parfois sold\'ees par des directions non pertinentes, parfois par des
+directions meilleures que les classiques de Newton et Chebychev.
+Cependant, la g\'en\'eration du code demande un pr\'e-traitement du code source lorsqu'il n'est pas \'ecrit de mani\`ere rigoureuse
+ ou trop astucieuse. De plus, comme Tapenade n'a pas \'et\'e conçu pour utiliser le mode inverse \`a un ordre sup\'erieur \`a deux,
+des incoh\'erences apparaissent \`a l'ordre trois avec ce mode et il faut modifier le code que Tapenade produit. Le r\'esultat n'est pas fiable 
+\`a cent pourcent. Par cons\'equent, ces parties de code \`a modifier ne peuvent pas être automatis\'ees. Voir l'annexe \ref{annexe:C} pour plus de d\'etails.
+ Même si le gain en temps n'est pas 
+\'enorme, on peut esp\'erer que les versions futures de Tapenade pour les ordres trois et quatre permettront cette avanc\'ee.
+
+Il est certain que les progr\`es de la DA vont ouvrir la voie \`a des m\'ethodes d'optimisation plus \'elabor\'ees. Comme nous l'avons
+vu, la complexit\'e est d'utiliser la tranformation de code pour l'efficacit\'e. En effet, la surcharge des op\'erateurs 
+est beaucoup plus flexible et facile \`a utiliser mais plus lente. La transformation de code requiert des calculs 
+explicites et sans astuces. 
+{\co 
+ Une fois cette \'etape franchie, nous pourrions voir apparaître des m\'ethodes plus 
+performantes remplaçant la m\'ethode de Newton. En r\'ealit\'e, ce genre de m\'ethodes ne seraient qu'applicables sur 
+des probl\`emes o\`u la m\'ethode de Newton marche, sinon il y a de fortes chances pour que ces m\'ethodes \'echouent aussi. 
+N\'eanmoins, dans ce cas, pour des dimensions relativement grandes, elles pourraient permettre un gain de temps.
+
+On peut imaginer qu'\`a l'avenir, certains compilateurs pourraient int\'egrer des outils de DA permettant d'obtenir des ordres sup\'erieurs sans
+l'intervention humaine, c'est-\`a-dire que le proc\'ed\'e serait enti\`erement automatis\'e. En effet, en analysant le code source du programme principal,
+il serait en mesure de savoir quel ordre \`a atteindre et quels param\`etres utiliser.
+
+}
+\nocite{choleskymod}
+\nocite{355936}
+\nocite{Iri89onautomatic}
+% \nocite{autodiff} ,
+% \nocite{librairie},
+% \nocite{tapenade}, 
+% \nocite{lapack}, 
+\nocite{convnewton}
+\nocite{diffautoopa}
+\nocite{Griewank2008EDP}
+\nocite{paresseuse} 
+\nocite{differentiaauto}
+\nocite{historical}
+\nocite{cauchy}
+\nocite{implementation}
+\nocite{Kantorovich}
+\nocite{Higham}
+\nocite{Baur}
+\nocite{Ulbrich}
+\nocite{Kchouk}
+\nocite{Bunch}
+\nocite{More}
+\nocite{Corliss1991b}
+\nocite{opt}
+\nocite{nocedal99}
+
+%%=================================================================
+%%========================== ANNEXES ==============================
+%%=================================================================
+
+\appendix
+\renewcommand{\chaptermark}[1]{\markboth{\textsc{\appendixname\ \thechapter.\ #1}}{}}
+%% Les annexes peuvent \^etre en fran\c{c}ais ou en anglais
+%% Si elles sont en anglais, elles doivent contenir \modeAnglais ou \englishMode
+%% juste apr\`es la commande \chapter{xxx}
+
+%%=========================== ANNEXE A ============================
+
+\modeFrancais{}
+\include{annexe-A} % fichier annexe-A.tex
+
+%%=========================== ANNEXE B ============================
+
+\modeFrancais{}
+\include{annexe-B} % fichier annexe-B.tex
+
+%%=========================== ANNEXE C ============================
+
+\modeFrancais{}
+\include{annexe-C} % fichier annexe-C.tex
+
+%=================================================================
+%=================== BIBLIOGRAPHIE ET INDEX ======================
+%=================================================================
+
+% --- Bibliographie
+\bibliographystyle{style/frplainUDS}
+% le contenu est dans un fichier bibliographie.bib. 
+% Il est possible de mettre plusieurs noms de fichiers s\'epar\'es par une virgule.
+\bibliography{bibliographie}  
+% --- Bibliographie
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+

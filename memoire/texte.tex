@@ -1,0 +1,3010 @@
+%!TEX TS-program = latex
+\documentclass[hypertexte]{scienceUdeS}
+
+% \usepackage[T1]{fontenc}
+% \usepackage[utf8]{inputenc}
+
+
+\long\def\beginpgfgraphicnamed#1#2\endpgfgraphicnamed{\includegraphics{#1}}
+
+
+\usepackage{array}
+% Pour inclure des schémas en format pdf avec la commande
+% \beginpgfgraphicnamed{figure_0}
+% \endpgfgraphicnamed
+% Voir pgfmanual \'a la page 654 pour plus d'information
+
+% \usepackage{program}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage[pdftex]{color}
+% \long\def\beginpgfgraphicnamed#1#2\endpgfgraphicnamed{%
+% \begingroup
+% \setbox1=\hbox{\includegraphics{#1}}%
+% \openin1=#1.dpth
+% \ifeof1 \box1
+% \else
+% \read1 to\pgfincludeexternalgraphicsdp\closein1
+% \dimen0=\pgfincludeexternalgraphicsdp\relax
+% \hbox{\lower\dimen0 \box1 }%
+% \fi
+% \endgroup
+% }
+
+
+% Option 
+% - simpleface : présente le document en recto seulement.
+%   Pour la copie de la bibliotheque nationale il faut faire au
+%   moins une impression avec l'option "simpleface" activée.
+% - hypertexte : permet de rajouter des liens hypertextes: 
+%   à retirer pour la copie de la bibliothèque nationale
+% - macosx : active les caractères codés en UTF8 au lieu 
+%   du latin1, pour utiliser les accents sur MAC
+% - pdflatex : utilise le logo de l'université en pdf.
+%   utile pour ceux qui utilise pdflatex et non latex.
+% - maitriseGL : pour une ma\^itrise en génie logiciel
+% - these : pour une these de doctorat
+
+% -------------------------------------------------
+% PAGE DE TITRE
+% -------------------------------------------------
+
+% ATTENTION : ne pas utiliser les macros \title \author ou \date !!!
+\auteur{Romain Cotte}
+\titre{L'outil de différentiation automatique en optimisation}
+
+% -------------------------------------------------
+
+% DESCRIPTION DU SOMMAIRE (EN FRANCAIS) -----------
+\sommaire{
+Les méthodes plus avancées d'optimisation avec ou sans contrainte nécessitent le calcul des dérivées
+de la fonction. En ce sens, la différentaition automatique est devenu un outil primordial.
+ Malgré le fait qu'il soit omniprésent, cet outil est encore en développement et en recherche. Il ne présente
+pas les inconvénients classiques des méthodes habituelles de dérivation mais reste complexe 
+à utiliser. Ce travail consiste à utiliser un outil de différentiation permettant de calculer des dérivées 
+d'ordre supérieur afin d'obtenir des directions améliorées.
+
+Nous définirons d'abord de manière générale un type d'algorithme d'optimisation à l'aide des directions suffisamment
+ descendantes. Leurs caractéristiques seront analysées pour modifier des méthodes de type Newton afin d'avoir une
+ meilleure fiabilité de convergence.\\
+Ensuite nous présenterons le fonctionnement de la différentiation automatique et en quoi c'en est un outil indispensable
+ à ce genre de méthodes.\\
+Puis, nous expliquerons pourquoi nous avons choisi l'outil Tapenade pour la différentiation automatique et
+ la librairie de Moré, Garbow, Hilstrom pour la collection de fonctions tests.
+Enfin, nous analyserons d'une part le temps d'exécution pour chacun des calculs critiques de ces méthodes ;
+ le calcul du gradient, du hessien, la décomposition de Cholesky puis le temps de calcul des méthodes proprement
+ dites.
+
+
+
+}
+
+% REMERCIEMENTS -----------------------------------
+\remerciements{Je souhaite exprimer mes sincères remerciements à mon directeur de recherche, Jean-Pierre Dussault, qui 
+a toujours été disponible pour moi. Son aide m'a été particulièrement précieuse et m'a fait progresser pour aller de l'avant.\\
+Ensuite je voudrais remercier mes deux colocataires, Emmanuelle Meunier et Maggie Poudrier qui furent très accueillantes et
+chaleureuses. Elles m'ont fait découvrir la région du Québec. Elles sont à l'image de ce que sont beaucoup de gens ici. \\
+Enfin, je remercie mes parents qui m'ont toujours soutenu dans mes études et qui me soutiendraient dans n'importe quel voie.
+
+
+}
+
+% LISTE DES ABREVIATIONS --------------------------
+\abreviations{ 
+  \begin{description}
+  \item[AMPL] {\it A Mathematical Programming Language}
+  \item[BBK] {\it Bounded Bunch-Kaufman}
+  \item[CUTEr] {\it A Constrained and Unconstrained Testing Environment, revisited}
+  \item[DA] Différentiation Automatique
+  \item[DED] Demi Espace de Diminution
+  \item[GAO] Graphe Acyclique Orienté
+  \item[LAPACK] {\it Linear Algebra PACKage}
+  \item[MGH] {\it Moré, Garbow et Hilstrom}
+  \item[NaN] {\it Not an Number}
+  \item[RA] {\it Recompute-All} Tout recalculer
+  \item[SA] {\it Store-All} Tout stocker
+  \item[SIF] {\it Standard Input Format}
+
+  \end{description}
+}
+
+%=================================================================
+%====================== DEBUT DU DOCUMENT ========================
+%=================================================================
+
+\begin{document}
+\enteteDeLaThese{}
+\renewcommand{\chaptermark}[1]{\markboth{\textsc{\chaptername\ \thechapter.\ #1}}{}}
+\renewcommand{\sectionmark}[1]{\markright{\textsc{\thesection. #1}}	}
+    
+%========================= INTRODUCTION ==========================
+
+% DEBUT DE L'INTRODUCTION
+\Introduction
+
+
+C'est par une représentation mathématique d'un phénomène physique, économique, humain que la programmation mathématique cherche à trouver
+un optimum, c'est-à-dire l'état jugé le meilleur ou le plus favorable à un problème. Plus précisément, la programmation non linéaire
+est une méthode permettant de résoudre des équations et inéquations qui généralement modélisent le phéonomène de notre modèle.
+Le but est de calculer un point minimisant (ou maximisant) une fonction objectif. Le problème peut être soumis à un ensemble de contraintes
+ce qui aura pour effet de réduire le domaine de réalisabilité.
+L'étude faite dans ce texte se limite à la programmation non-linéaire sans contrainte. D'autre part, il y a plusieurs hypothèses sur la 
+fonction objectif, ce qui autorise l'utilisation de certains algorithmes. Ce travail consiste à développer
+un environnement d'expérimentation au sein de scilab afin de tester des algorithmes de type Newton. Pour obtenir une amélioration 
+de l'algorithme, qui requiert le gradient et le hessien de la fonction, nous avons besoin de ses dérivées d'ordre supérieur. Le calcul
+de dérivées est un domaine complexe, d'autant plus que nous avons besoin d'efficacité et de précision d'une part et de pouvoir automatiser
+ces calculs d'autre part.
+
+Ainsi l'outil de différentiation automatique semble un outil idéal. Bien qu'il soit encore en constant progrès, il a déjà fait ses preuves
+et est largement utilisé en optimisation (AMPL).  
+Un outil de DA a été elaboré (sciad) par Benoit Hamelin, et une estimation des co\^uts de calcul a été faite 
+par décompte du nombre d'opérations.
+Le but est de ce mémoire est de développer un environnement d'expérimenation de méthodes d'optimisation
+gr\^ace à la différentiation automatique.
+
+Cet outil nous permet d'atteindre des dérivées supérieures, cela ouvre la voie à de nouvelles méthodes que nous 
+allons tester. Est-ce que le gain de convergence que l'on obtient compense le temps de calcul des dérivées nécessaires ?
+
+
+Dans une première partie, nous définirons les hypothèses préalables, avant de fournir une étude générale
+sur les algorithmes de descente et sur l'algorithme de Newton et ses dérivées. Une fois que les complexités seront établies
+nous introduirons la différentiation en présentant quelques principes de fonctionnement; les modes inverse et tangent.
+
+Ensuite, nous justifierons nos choix d'implentation parmis l'ensemble des outils  et enfin nous 
+présenterons nos résultats.
+
+
+%  Les algorithmes seront utilisés au sein de scilab et les calculs
+% plus complexes en fortran.  Une librairie
+% de fonctions tests en fortran sera utilisée  et "{\it linkée}" afin que le code puisse être utilisable sous scilab. Je tenterai de valider ces estimations
+% théoriques par les temps de calcul.
+
+
+
+
+% Dans une première partie, nous étudierons les propriétés des directions de descente, des variantes de méthodes de descente et 
+% leur complexité.
+% Puis nous descrirons les grands principes de fonctionnement de la différentiation automatique. Enfin, avant de conclure par 
+% les résultats obtenus, nous expliquerons les choix d'implémentations et pourquoi nous avons choisi ceux-la.\\
+
+% {\rm Font : rm}\\ {\sf Font : sf}\\ {\tt Font : tt}\\ {\bf Font : bf}\\ 
+% {\it Font : it}\\ {\sl Font : sl}\\{\sc Font : sc}\\{\cal Font : cal}\\
+% {\mit Font : mit}\\
+% 
+% {\tiny tiny},
+% {\scriptsize scriptsize}, {\footnotesize footnotesize}, {\small small},
+%  {\normalsize normalsize}, {\large large}, {\Large Large},
+%  {\LARGE LARGE}, {\huge huge}, {\Huge Huge}.
+
+
+% FIN DE L'INTRODUCTION
+
+% Un article par chapitre
+%=========================== CHAPITRE 1 ============================
+\chapter[Algorithmes pour l'optimisation sans contrainte] 
+        {\singlespacing%
+         Algorithmes pour l'optimisation sans contrainte}
+         \label{ch:chapitre-1}
+\include{chapitre-1} % fichier chapitre-1.tex
+
+%=========================== CHAPITRE 2 ============================
+\chapter[Obtention de dérivées : Différentiation automatique] 
+        {\singlespacing%
+         Obtention de dérivées : Différentiation automatique}
+         \label{ch:chapitre-2}
+\include{chapitre-2} % fichier chapitre-2.tex
+
+%=========================== CHAPITRE 3 ============================
+\chapter[Les choix d'implémentations des opérations critiques] 
+        {\singlespacing%
+         Les choix d'implémentations des opérations critiques}
+         \label{ch:chapitre-3}
+\include{chapitre-3} % fichier chapitre-3.tex
+
+%=========================== CHAPITRE 4 ============================
+\chapter[Résultats] 
+        {\singlespacing%
+         Résultats}
+         \label{ch:chapitre-4}
+\include{chapitre-4} % fichier chapitre-4.tex
+
+
+
+%=========================== CONCLUSION ============================
+
+%\backmatter
+% DEBUT DE LA CONCLUSION
+\Conclusion
+L'outil de DA nous a permis d'atteindre les dérivées d'ordre supérieur et avec 
+des temps de calcul raisonnablement faible. Malheureusement, la génération du code
+ demande un certain traitement quand le code n'est pas écrit de manière rigoureuse
+ ou trop astucieuse, il ne peut donc pas être totalement automatisé. De plus, le code
+généré pour les odres supérieurs a besoin d'être modifié dans la plupart des cas. 
+On peut espérer que les versions futures de différentiation automatique arriverons a 
+fournir les codes des dérivées supérieur sans modification. 
+En ce qui concerne les directions d'ordre supérieures, pour une dimension assez petite 
+les temps d'executions pour la méthode de Newton équivaut en général à méthode de 
+Chebychev.
+
+
+
+% FIN DE LA CONCLUSION
+
+%%=================================================================
+%%========================== ANNEXES ==============================
+%%=================================================================
+
+\appendix
+%% Les annexes peuvent être en fran\c{c}ais ou en anglais
+
+%%=========================== ANNEXE A ============================
+
+\include{annexe-A} % fichier annexe-A.tex
+
+%%=========================== ANNEXE B ============================
+
+\include{annexe-B} % fichier annexe-B.tex
+
+
+%%=========================== ANNEXE C ============================
+
+\include{annexe-C} % fichier annexe-C.tex
+
+%=================================================================
+%=================== BIBLIOGRAPHIE ET INDEX ======================
+%=================================================================
+
+% --- Bibliographie
+\bibliographystyle{frplainUDS}
+% le contenu est dans un fichier these.bib. 
+% Il est possible de mettre plusieurs noms de fichiers séparés par une virgule.
+\bibliography{bibliographie}
+% --- Bibliographie
+%  author = {Jorge J. Mor\'{e}, Burton S. Garbow and Kenneth E. Hillstrom},
+
+
+
+\end{document}
+
+
+
+
+
+
+
+\section{Introduction aux directions de descente}
+\subsection{Hypothèses de travail}
+Dans l'ensemble du texte, nous faisons deux hypothèses : la continuité et la différentiabilité.
+Soit le problème d'optimisation suivant :
+\begin{equation}
+\min_{x\in \mathbb{R}^n} f(x)
+\label{eq:princ}
+\end{equation}
+Il s'agit d'un problème sans contraintes. La fonction objectif $f$, à valeurs de
+ $\mathbb{R}^n$ dans $\mathbb{R}$, est continue et différentiable. L'ordre de différentiabilité va dépendre de la méthode choisie. 
+ Cela exclut les problèmes en nombres entiers. On parle de problème d'optimisation à $n$ variables de décision et supposons que $0<n$. 
+Il existe deux types de solutions : les minima locaux, dont aucun point de leur voisinage n'est meilleur et les minima globaux, dont aucun des points
+du domaine n'est meilleur. Par la suite, nous ne traiterons que les minima locaux. 
+
+En notant $\nabla f(x) $ ou $F(x):\mathbb{R}^n\rightarrow \mathbb{R}^n$ le gradient de la fonction, un vecteur colonne et 
+$ \nabla^2f(x)$ ou $\nabla F(x): \mathbb{R}^n\rightarrow \mathbb{R}^{n\times n} $ le hessien, la conditions nécessaires d'optimalité 
+indique que si $x^*$ est un minimum local et que $f$ est différentiable dans un voisinage ouvert $V$ de $x^*$ alors 
+\begin{equation}
+\label{equ:prem}
+\nabla f(x^*)=0
+\end{equation}
+Ces points sont nommées points stationnaire.
+Si, de plus, $f$ est deux fois différentiable sur $V$ alors 
+\begin{equation}
+\label{equ:sec}
+\nabla^2 f(x^*) \text{ est définie positive.}
+\end{equation}
+
+La condition \eqref{equ:prem} s'appelle la condition nécessaire du premier ordre et la condition \eqref{equ:sec} correspond à la condition nécessaire du second ordre.
+
+
+
+\subsection{Méthodes avec recherche linéaire}
+Soit une fonction $f:\ \mathbb{R}^n \rightarrow \mathbb{R}$ contin\^ument différentiable sur $\mathbb{R}^n$ et 
+$h_{x,d}(\theta)=f(x+\theta d)$.
+Pour le problème de minimisation \eqref{eq:princ} , les algorithmes couramment utilisés sont généralement les algorithmes de 
+descente pour des problèmes d'optimisation car ils permettent d'obtenir une convergence plus forte que pour des problèmes d'équations
+non-linéaire. Donnons la définition d'une direction de descente.
+
+%-----------------------Définition direction de descente
+\begin{frdefinition}
+\label{def:1}
+Soit $x \in \mathbb{R}^n$ et $d \neq 0$ un vecteur de $\mathbb{R}^n$, alors d est une direction de
+descente de $f$ au point $x$ s'il existe $0<\theta_m$ tel que pour tout $\theta \in ]0,\theta_m]$,
+$f(x+\theta d)<f(x)$. \\
+\end{frdefinition}
+
+
+Il s'agit d'algorithmes itératifs basés sur le fait que si un point $x$ ne satifait pas aux conditions d'optimalité, alors il est 
+possible de construire un autre point $x'$ qui vérifie $f(x')<f(x)$.
+L'ensemble du {\it Demi Espace de Diminution} en $x$, noté $DED(x)$ est l'ensemble des directions qui satisfait à la relation :
+$\nabla f(x)d<0$. Ces algorithmes ont tous la même forme;  trouver une direction dans le $DED(x)$ et 
+ensuite approximer la fonction $h_{x,d}$ pour passer du point $x_k$ au suivant $x_{k+1}=x_k+\theta d$. Néanmoins, il faut s'assurer que la suite ${x_k}$
+possède bien des points d'accumulation satisfaisant aux conditions.
+
+
+%-----------------------Définition direction suffisamment descente
+\begin{frdefinition}
+\label{def:2}
+ Une direction d est considérée suffisamment descendante s'il existe deux constantes positives $\gamma_0$ et $\gamma_1$ 
+ indépendantes de $x$ telles que d satisfasse aux inégalités suivantes : 
+
+\begin{equation}  % L'environnement equation numérote
+		  % l'équation. L'étoile spécifie de ne pas mettre
+		  % de numéro
+\label{equ:1}
+\nabla f(x)d \leq -\gamma_0 \lVert \nabla f(x) \rVert^2 
+\end{equation}
+\begin{equation}
+\label{equ:2}
+\lVert d \rVert \leq \gamma_1 \lVert \nabla f(x) \rVert
+\end{equation}
+
+%$$\nabla f(x)d \leq -\gamma_0 \lVert \nabla f(x) \rVert^2$$
+%$$\lVert d \rVert \leq \gamma_1 \lVert \nabla f(x) \rVert$$
+\end{frdefinition}
+
+
+
+
+
+
+%Voici l'équation~\eqref{equ:1} qui est très pénible :
+
+
+
+
+
+
+\begin{figure}
+\caption{Directions suffisamment descendantes}
+\begin{center}
+  \beginpgfgraphicnamed{figures/figure_2}
+  \endpgfgraphicnamed
+\end{center}
+\end{figure}
+Cette définition assure que toute direction $d$ utilisée par un algorithme de descente est un vecteur assez long, et fait un angle assez
+aigu avec l'opposé de $\nabla f$. La stratégie, appelée {\it linesearch}, consiste à minimiser $\min_{\theta} h_{x,d}(\theta)$. 
+Evidemment, le minimum $\theta_m$ est approximatif, nous aurons pas besoin d'une précision aussi grande que le minimum $x^*$ étant donné
+que lorsque l'on se trouve à un certain voisinage de la solution, la recherche linéaire n'est plus active.
+
+
+
+
+\begin{frdefinition}
+\label{def:3}
+Un pas $\theta$ est dit admissible pour une direction suffisamment descendante d lorsqu'il satisfait aux deux inégalités suivantes, nommées
+ critère d'Armijo et de Wolfe respectivement :
+\begin{equation}
+\label{equ:3}
+f(x+\theta d)-f(x) \leq \tau_0 \theta \nabla f(x)d, \ \tau_0 \in ]0,\frac{1}{2}[
+\tag{Armijo}
+\end{equation}
+\begin{equation}
+\label{equ:4}
+\tau_1 \nabla f(x)d \leq  \nabla f(x+\theta d)d , \ \tau_1 \in ]\tau_0,1[
+\tag{Wolfe}
+\end{equation}
+ 
+
+
+\end{frdefinition}
+
+\paragraph{Famille de directions suffisamment descendantes}
+Considérons le cas général d'une direction $\bar{d}=-H\nabla f(x)^T$, comme la direction de Newton, il s'agit d'une
+transformation linéaire de la direction de pente la plus forte. En supposant que $H$ est 
+une matrice définie positive, alors la dircetion $\bar{d}$ vérifie les conditions d'une direction suffisamment 
+descendante. En effet
+$$\nabla f(x)\bar{d}=-\nabla f(x)H\nabla f(x)^T$$
+En notant $\lambda_{min}$ la plus petite valeur propre de H, on a
+$$\nabla f(x)H\nabla f(x)^T \geq \lambda_{min} \lVert \nabla f(x)\rVert^2$$
+$$\nabla f(x)\bar{d}\leq -\lambda_{min}\lVert \nabla f(x)\rVert^2 $$
+Et d'autre part $$\lVert \bar{d}\rVert \leq \lambda_{max}\lVert \nabla f(x)\rVert$$
+
+\vspace{1cm}
+
+L'ensemble des algorithmes de descente peuvent être généralisés sous la forme suivante : %\ref{alg:1}.
+
+\begin{algorithm}                     % enter the algorithm environment
+\caption{Algorithme de descente}          % give the algorithm a caption
+\label{alg:1}                           % and a label for \ref{} commands later in the document
+\begin{algorithmic}  
+\WHILE{$\neg$ fini}
+\STATE $d \leftarrow$  direction qui satisfait la définition \ref{def:2}
+\STATE $\theta \leftarrow$  qui satisfait la définition \ref{def:3}, les critères d'Armijo et Wolfe
+\STATE $x_{k+1} \leftarrow x_k+\theta d$
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{frtheoreme}
+Soit un algorithme de descente appliqué au problème :\\
+$$\min_{x\in \mathbb{R}^n} f(x), \ f \in \mathcal{C}^1(\mathbb{R}^n)$$
+Supposons qu'à chaque itération la direction utilisée $d_k$ satisfait les deux critères 
+
+
+
+
+
+
+\end{frtheoreme}
+
+
+
+
+
+
+
+\section{Méthode de Newton}
+
+% But : Résolution d'équations non linéaires
+% algorithme efficace pour trouver des approximations d'un zéro d'une fonction
+% Soit $f:\mathbb{R}^n\rightarrow \mathbb{R}$ et le problème de trouver une solution
+% au système de n équations avec n inconnues :
+% $$f_i(x_1,\hdots,x_n)=0, \ 1\leq i\leq n$$
+% o\`u les $f_1,\hdots, f_n$ sont les composantes de $F$.
+% On suppose que $F$ est contin\^ument différentiable sur un ouvert convexe, ici $\mathbb{R}^n$ et 
+% qu'il existe $x^*$ tel que $F(x^*)=0$ et $F'(x^*)$ est non singulière.
+
+La méthode de Newton joue un r\^ole central dans la résolution d'équations non linéaires et ainsi dans l'optimisation 
+non linéaire. Elle permet de trouver les racines d'une fonction. Comme le montre la condition nécessaire du premier ordre,
+il faut trouver un point tel que $F(x):=\nabla f(x)=0$
+
+
+ L'idée est de simplifier notre équation très souvent complexe en une équation plus simple : une équation 
+quadratique. Pour obtenir cette simplification nous utilisons la relation de Taylor.
+
+
+% 
+% \begin{frdefinition}\textbf {(Modèle linéaire d'une fonction)} \\
+% Soit $f:\mathbb{R}^n\rightarrow \mathbb{R}$ une fonction différentiable. Le modèle linéaire de $f$ en 
+% $x^*$ est une fonction $l_{x^*}:\mathbb{R}^n\rightarrow \mathbb{R}$ définie par 
+% \begin{equation}
+% l_{x^*}(x)=f(x^*)+\nabla f(x^*)(x-x^*)
+% \end{equation}
+% o\`u $\nabla f(x^*)$ est le gradient de $f$ en $x^*$. 
+% \end{frdefinition}
+
+
+\begin{frdefinition}\textbf {(Modèle quadratique d'une fonction)} \\
+Soit $f:\mathbb{R}^n\rightarrow \mathbb{R}$ une fonction deux fois différentiable. Le modèle quadratique de $f$ en 
+$x^*$ est une fonction $q_{x^*}:\mathbb{R}^n\rightarrow \mathbb{R}$ définie par 
+$$q_{x^*}(x)=f(x^*)+\nabla f(x^*)(x-x^*)+\frac{1}{2}(x-x^*)^T\nabla^2 f(x^*)(x-x^*)$$
+o\`u $\nabla f(x^*)$ est le gradient de $f$ en $x^*$ et $\nabla^2 f(x^*)$ est la matrice hessienne de
+$f$ en $x^*$. En posant $d=x-x^*$, on obtient la formulation équivalente : 
+\begin{equation*}
+q_{x^*}(x+d)=f(x^*)+\nabla f(x^*)d+\frac{1}{2}d^T\nabla^2 f(x^*)d
+\end{equation*}
+\end{frdefinition}
+Si nous minimisons le modèle quadratique au lieu de la fonction :
+\begin{equation*}
+\min_{d\in \mathbb{R}^n} q_{x^*}(x+d)=f(x^*)+\nabla f(x^*)d+\frac{1}{2}d^T\nabla^2f(x)d 
+\end{equation*}
+
+La condition suffisante d'optimalisté du premier ordre nous donne :
+\begin{equation*}
+\nabla q_{x^*}(x+d)=\nabla f(x^*)d+\nabla^2f(x)d=0 
+\end{equation*}
+
+L'équation $\nabla^2 f(x^*)d_N=\nabla f(x^*)$ est appelé équation de Newton et $d_N$ direction de Newton.
+
+En supposant que la matrice $\nabla^2f(x)$ est définie positive et donc inversible, la 
+solution revient à trouver le minimum du modèle quadratique de la fonction en $x_k$, d'o\`u :
+\begin{equation*}
+x_{k+1}=\arg\min_{x\in\mathbb{R}^n} q_{x_k}(x)
+\end{equation*}
+La solution peut s'écrire 
+\begin{equation*}
+x_{k+1}\leftarrow x_k\underbrace{-\nabla F(x_k)^{-1}F(x_k)}_{d_N}
+\end{equation*}
+\begin{equation*}
+\text{o\`u } d_N=-\nabla^2f(x)^{-1}\nabla f(x)^T
+\end{equation*}
+% Cette direction correspond à la direction de Newton et elle intervient dans la 
+% résolution de systèmes d'équations non linéaires. En notant
+%  $F : \mathbb{R}^n \rightarrow \mathbb{R}^n$ le gradient de $f$, on recherche ses zéros. 
+% $$x_{k+1}\leftarrow x_k\underbrace{-\nabla F(x_k)^{-1}F(x_k)}_{d_N}$$
+% Cela revient au même de considérer la fonction $F:\mathbb{R}^n\rightarrow \mathbb{R}^n$; c'est comme s'il y avait
+% $n$ systèmes et $\nabla F(x^*)$ correspond au hessien.
+
+
+
+
+L'idéal est de commencer à partir d'une approximation de $x^*$ notre minima local; nommons le $x_0$. 
+On calcule d'abord le modèle quadratique en $x_0$ pour obtenir le minima $x_1$. 
+Si les conditions d'optimalité sont satifaites alors l'algorithme s'arrete, sinon on recalcule l'approximation
+quadratique en $x_1$.
+% En posant $d=x-x^*$, si on veut satisfaire la condition nécessaire du premier ordre il faut que : 
+% \begin{equation}
+% l_{x^*}(x+d_N)=F(x^*)+\nabla F(x^*)d=0
+% \end{equation}
+
+\begin{figure}
+\caption{Deux itérations de la méthode de Newton dans $\mathbb{R}$}
+\begin{center}
+\fbox{
+\begin{minipage}[c]{0.4\textwidth}
+\begin{center}
+\beginpgfgraphicnamed{figures/figure_7}
+\endpgfgraphicnamed
+\end{center}
+\end{minipage}
+}
+\end{center}
+\label{fig:Newton}
+\end{figure}
+
+Dans le cas unidimensionnel, avec plusieurs expérimentations, nous pouvons constater que 
+la méthode de Newton converge très vite lorsque
+\begin{itemize}
+\item la fonction n'est pas trop non linéaire c'est-à-dire que les variations de la fonction ne sont pas trop grande
+pour une petite variation de $x$.
+\item la dérivée de la fonction n'est pas trop proche de $0$.
+\item le point initial $x_0$ n'est pas trop loin de la solution.
+\end{itemize}
+Si une de ces conditions n'est pas satisfaite, il se peut que l'algorithme diverge.
+
+
+
+
+
+Fourier \cite{convnewton} a démontré la convergence quadratique local dans le cas réel mais 
+le théorème de Kantorovich nous assure la convergence sous certaines conditions dans le 
+voisinage de $x_0$. De plus, il donne une borne de l'erreur pour chaque itéré.
+
+\begin{frtheoreme}(Kantorovich \cite{Kantorovich})
+\label{th:Kantorovich}
+Soit $x_0 \in D_0$ tel que $F'(x_0)^{-1}$ existe et que \\
+$$\lVert F'(x_0)^{-1} \rVert \leq B$$
+$$\lVert F'(x_0)F(x_0) \rVert \leq \eta$$
+$$ \lVert F'(x_0)-F'(y)\rVert \leq K\lVert x-y \rVert \text{ pour tout }x\text{ et }y\text{ dans }D_0 $$
+avec $h=BK\eta \leq \frac{1}{2}$\\
+Soit $\Omega_*=\left\{x\ |\ \lVert x-x_0 \rVert \leq t^*\right\}$ o\`u $t^*=\left(\frac{1-\sqrt{1-2h}}{h} \right)\eta$\\
+Si $\Omega_* \subset D_0$ alors les itérations de Newton; $x_{k+1}=x_k-F'(x_k)^{-1}F(x_k)$ sont bien
+définies, restent dans $\Omega_*$ et convergent vers $x_*\in \Omega_*$ tel que $F(x^*)=0$. De plus,
+$$\lVert x_*-x_k \rVert \leq \frac{\eta}{h}\left(\frac{(1-\sqrt{1-2h})^{2^k}}{2^k}\right)\ k=0,\ 1,\ 2,\ \cdots$$
+\end{frtheoreme}
+
+
+Un théorème de convergence pour une méthode itérative est appelé un théorème de convergence 
+locale lorsque l'on suppose l'existence d'une solution $x^*$ et le point initial $x_0$ est 
+suffisamment proche de $x^*$. D'autre part, un théorème de convergence tel que \ref{th:Kantorovich},
+qui ne suppose pas l'existence d'une solution mais suppose certaines conditions sur $x_0$ est
+appelé une théorème de convergence semi-locale.\\
+
+Sans appliquer les conditions des définitions \ref{def:2} et \ref{def:3}, l'algorithme de Newton
+a une convergence locale et semi-locale. 
+
+
+
+\subsection{Ordre de convergence}
+Pour pouvoir comparer les algorithmes, nous définissons la vitesse de convergence qui 
+est le témoin théorique de l'efficacité de la méthode.
+
+\begin{frdefinition}
+\label{def:convergence}
+La vitesse de convergence de la suite $\{x_k\}$ vers le point $x_*$, telle que $\forall k,\ x_k \neq x^*$ s'exprime 
+à l'aide des scalaires $p$ et $\gamma$ dans l'expression suivante:
+$$\lim \sup_{k\rightarrow \infty}\frac{\lvert x_{k+1}-x^*\rvert}{\lvert x_k-x^* \rvert^p}=\gamma< \infty $$
+L'ordre de convergence de la suite est donné par la plus grande valeur que p puisse prendre pour que la limite 
+ci-haut demeure finie. Lorsque p=1, $\gamma$ est nommée le taux de convergence.
+\end{frdefinition}
+
+Le cas o\`u $p=1$ est dite convergence linéaire, le cas $p=2$, convergence quadratique, $p=3$ cubique, plus $p$
+est élevée et plus la méthode sera efficace.
+
+\begin{frtheoreme}
+Soit $x^*$ une racine isolée de la fonction $g$ telle que $g'(x^*)\neq 0$, avec la fonction $g'$ Lipschitzienne, 
+ Alors, il existe un voisinage de $x^*$ tel que si la méthode de Newton 
+est initialisée dans ce voisinage, elle produit une suite convergeant vers $x^*$ et la vitesse de convergence 
+asymptotique est quadratique.
+\end{frtheoreme}
+
+
+La condition pour que $x_0$ soit proche de la solution se traduit par la convergence local, c'est-à-dire que $x_0$ doit
+être choisi dans un certain voisinage de la solution.
+Le fait que la fonction ne soit pas trop non linéaire correspond au caractère lipschitzien 
+de la fonction. Par exemple, l'agorithme de Newton aura beacoup de mal à trouver le zéro de l'équation
+$\frac{1}{x}-C$ o\`u $C$ est une constante positive, si l'on part d'un point $x_0$ proche de zéro.
+ Enfin, le théorème de Kantorovich suppose que $F(x_0)^{-1}$ existe. Pour un 
+ordinateur il faudrait que $\lVert F(x_0)^{-1}\rVert \geq \epsilon>0$ à cause des erreurs
+d'arrondis et d'annulation.
+
+La direction $d_N$ est suffisamment descendante si la matrice $\nabla^2 f(x)$ est définie positive. Dans le 
+cas contraire, la suite $\{x_k\}_k$ peut diverger, c'est pour cela que cette matrice va être modifiée pour 
+devenir définie positive.
+
+\subsection{Itération de Newton modifiée}
+
+Dans le but de satisfaire les conditions pour la méthode de descente, il faut modifier la direction $d_N$.
+ Sinon, la méthode peut ne plus être globalement convergente. 
+De la même manière, on considère l'approximation d'ordre deux pour trouver le minimum de $f$ sauf qu'au lieu
+d'avoir la matrice hessienne, nous avons une modification : $B_k$
+$$f(x_k+d)=f(x_k)+\nabla f(x_k)^Td+\frac{1}{2}d^TB_kd$$ 
+o\`u $B_k\simeq \nabla^2f(x)$. On va chercher le problème d'optimisation par rapport à la direction $d$ :
+$$\min_d\nabla f(x_k)^Td+\frac{1}{2}d^TB_kd$$
+En dérivant par rapport à $d$ la condition nécessaire du premier ordre fournit la relation :
+$$\nabla f(x_k)^T+B_kd=0$$
+$$d=-B_k^{-1}\nabla f(x_k)^T $$
+Le hessien $\nabla^2f(x)$ va être transformé pour le rendre défini positif. Il suffit par exemple de prendre :
+$$B_k=\nabla^2 f(x_k)+\max(-\lambda_{min}+\epsilon,0)I$$
+o\`u $\lambda_{min}$ est la plus petite valeur propre de $\nabla^2 f(x_k)$ et $\epsilon>0$.
+
+
+L'inconvénient de cette formule est dans le calcul de $\lambda_{min}$, il faut avoir l'ensemble des valeurs propres de
+la matrice et ce calcul a une complexité en $\mathcal{O}(n^3)$ avec une constante implicite plut\^ot défavorable. 
+Nous allons directement nous aider de la décomposition de Cholesky pour modifier la diagonale. Ainsi, on espère avoir
+une complexité totale inférieure.
+% Pour cela, nous utiliserons une décomposition de Cholesky modifiée pour que toutes les 
+% valeurs propres soient strictement positives.
+
+% Convergence locale quadratique
+
+
+
+
+\section{Résolution de système linéaire}
+A chaque itération de Newton il faut résoudre $\nabla^2 f(x)d_N=\nabla f(x)^T$ o\`u $\nabla^2 f(x^*)\in \mathbb{R}^{n\times n}$
+ est une matrice symétrique et $\nabla f(x)^T \in \mathbb{R}^n$.
+Il s'agit donc d'un système linéaire de la forme $Ax=b$ de grande taille. Il n'est pas envisageable 
+d'adopter une résolution du type Cramer, pour que ce soit efficace, nous devons
+ modifier la matrice $A$, il existe plusieurs décompositions:
+\subsection{Qu'existe-il?}
+\begin{description}
+  \item[Elimination de Gauss-Jordan] \hfill \\
+Aussi appelé pivot de Gauss, elle s'applique sur une matrice $A \in \mathbb{R}^{n\times n}$ non singulière.
+ La stratégie est de réduire gr\^ace aux opérations élémentaires sur les colonnes de $A$ pour obtenir une matrice triangulaire supérieure. 
+Il y a $n-1$ étapes, premièrement, $A^{(1)}\leftarrow A$ et $b^{(1)}\leftarrow b$ sont initialisés. Au bout
+de la $k$ième étape, nous avons $A^{(k)}x=b^{(k)}$ o\`u
+$$A^{(k)}= \left[
+\begin{array}{rl}
+ A^{(k)}_{11} & A^{(k)}_{12} \\
+ 0       & A^{(k)}_{22} \\
+\end{array}\right]$$
+o\`u $A^{(k)}_{11} \in \mathbb{R}^{(k-1)\times(k-1)}$ est une matrice triangulaire supérieure.
+
+L'éminination de Gauss-Jordan a un co\^ut de $\frac{2}{3}n^3$.
+
+
+  \item[Décomposition LU] \hfill \\
+Pour une matrice $A\in \mathbb{R}^{n\times n}$, cette décomposition fournit $LU$ o\`u
+$L$ est une matrice triangulaire inférieure et $U$ une matrice triangulaire supérieure. Il existe une unique décomposition si
+et seulement si $A_k=A(1:k,1:k)$ est non singulière pour $k=1:n-1$, sinon elle existe mais n'est pas unique.
+
+La décomposition LU a un co\^ut de $\frac{1}{3}n^2(m-n)$ (pour $m\geq n$ ?)
+
+
+  \item[Décomposition de Cholesky] \hfill \\
+
+
+Cette décomposition, due au fran\c{c}ais André-Louis Cholesky (1875-1918 alors qu'il était commandant en chef) permet de résoudre de manière efficace des systèmes
+ d'équation linéaire de la forme $Ax=b$ lorsque $A$ est une matrice définie positive.
+
+\begin{frtheoreme}
+ Si A est une matrice réelle symétrique,  définie positive, alors il existe une unique matrice L
+triangulaire inférieure et inversible, telle que
+ $$A = LL^T$$
+\end{frtheoreme}
+
+
+
+\begin{algorithm}                     % enter the algorithm environment
+\caption{Factorisation de Cholesky}          % give the algorithm a caption
+\label{alg:chol}                           % and a label for \ref{} commands later in the document
+\begin{algorithmic}  
+\STATE \textbf{Préalables:} %Variables en entrée :  
+\begin{itemize}
+\item[$\bullet$] Soit $A \in \mathbb{R}^{n\times n}$ une matrice symétrique définie positive
+\end{itemize}
+\STATE \textbf{En sortie:} %Variables en entrée :  
+\begin{itemize}
+\item[$\bullet$] calcule $R$ o\`u $A=R^TR$ et $R=(r_{ij})_{1\leq i,j\leq n}$
+\end{itemize}
+\FOR{$j = 1:n$} 
+\FOR{$i = 1:n$} 
+\STATE $r_{ij}\leftarrow(a_{ij}-\sum_{k=1}^{i-1}r_{ki}r_{kj})/r_{ii}$
+\ENDFOR
+\STATE $r_{jj}=(a_{jj}-\sum_{k=1}^{j-1}r_{kj}^2)^{1/2}$
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+
+Pour résoudre le système, $Ax = LL^Tx = b$, on commence par résoudre $Ly=b$ puis $L^Tx=y$.
+Le nombre d'opérations requis pour cette décomposition est de l'ordre de $\frac{1}{3}n^3$. Il s'agit de la méthode 
+la plus efficace donc celle que l'on devrait utiliser, cependant lorque la méthode de Newton est appliquée,
+la matrice hessienne n'est a priori pas définie positive. C'est pour cette raison que l'agorithme de Cholesky a été 
+modifié. La matrice va être corrigée pour obtenir une décomposition définie positive
+ et plut\^ot bien conditionnée.
+\end{description}
+
+
+\subsection{Décomposition de Cholesky Modifiée}
+
+
+Soit une matrice $A$, symétrique mais pas nécessairement définie positive. L'algorithme de Cholesky modifiée
+permet de calculer la décompisition modifiée $P(A+E)P^T=LDL^T$ o\`u $P$ est une matrice de permutation, $E$ est une
+perturbation pour rendre la matrice $A+E$ définie positive, $D$ est une matrice diagonale et 
+$L$ une matrice triangulaire inférieure. La norme de $E$ devrait être petite et $A+E$ 
+bien conditionnée. Cette technique est largement utilisée en optimisation comme dans notre cas ou bien pour 
+calculer des préconditionneurs définis positifs.
+Comme le soulignent Cheng et Higham dans \cite{Higham}, les objectifs de l'algorithme de Cholesky modifié peuvent être déclarés
+comme suit :
+\begin{itemize}
+\item[O1] Si $A$ est "suffisamment définie positive", alors $E$ devrait être égale à zéro.
+\item[O2] Si $A$ est indéfinie, $\lVert E \rVert$ ne devrait pas être plus grand que 
+\[\min\{\lVert \Delta A \rVert: A+\Delta A \text{ est définie positive } \} \]
+pour une norme appropriée.
+\item[O3] La matrice $A+E$ devrait être raisonnablement bien conditionnée. 
+\item[O4] Le co\^ut de l'algorithme devrait être le même que le co\^ut de la décomposition standard de Cholesky
+ pour l'ordre le plus élevé.
+\end{itemize}
+
+
+
+
+
+
+%   Voir \ref{chap3:cholesky}.
+
+
+
+\section{Recherche linéaire}
+Pour s'assurer que les méthodes utilisées convergent correctement, une possibilité est d'utiliser une recherche linéaire. En effet, celle ci
+va nous garantir que l'on ne s'éloigne pas trop du point courant. La direction de Newton par exemple peut fournir des directions 
+de norme élevée et du même coup la convergence n'est pas systématique. Ceci se remarque d'autant que la dimension est grande.\\
+Il existe plusieurs technique pour nous assurer que la valeur de la fonction objectif diminue bien au court des itérations
+si on possède une direction de descente.
+
+
+
+% \section{Région de confiance}
+% Une autre technique qui nous permet de ne pas trop s'écarter du point courant est la méthode par région de confiance. La zone de 
+% confiance, de laquelle on ne va pas pouvoir s'écarter va être déterminée par approximation quadratique de la fonction. Si cette
+% approximation est trop erronée, la zone devra être réduite, sinon, nous l'augmenterons.\\
+
+
+
+\section{Méthodes d'ordre supérieur à deux}
+Les méthodes de Halley et de Chebychev sont techniques célèbres pour résoudre des équations non linéaire. Ces algorithmes
+sont très proches de la méthode de Newton et ont une convergence cubique. Le gain de convergence s'obtient par une analyse
+plus précise de la fonction puisqu'elles requièrent la dérivée seconde de $F$.
+En fin de section nous verrons une méthode du même type qui a fait l'objet de recherches récentes.
+
+\subsection{Méthode de Halley}
+Cette méthode a été découverte par Edmond Halley (1656-1742), elle s'applique à une fonction $\mathcal{C}^2$.
+Au lieu de faire une approximation linéaire de la fonction $F$, on part d'une approximation quadratique :
+$$F(x+d)=F(x)+\nabla F(x)d + \frac{1}{2}d^T\nabla^2F(x)d + \mathcal{O}({\lVert d\rVert^3}) $$
+Cauchy a démontré sous certaines conditions la convergence semi-locale cubique.
+En effectuant le développement de Taylor limité $\sqrt{1-x}\simeq 1-\frac{1}{2}x $, on obtient la méthode de Halley (1694):
+$$x_{k+1}=x_k-[\nabla F(x_k)-\frac{1}{2}\nabla^2F(x_k)\nabla F(x_k)^{-1}F(x_k)]^{-1}F(x_k)$$
+
+Cela revient à résoudre les différents systèmes : 
+$$F(x_k)+\nabla F(x_k)c_k=0 \Leftrightarrow c_k=-\nabla F(x_k)^{-1}F(x_k)$$
+$$F(x_k)+\nabla F(x_k)d_k+\frac{1}{2}\nabla^2F(x_k)c_kd_k=0  \Leftrightarrow  d_k=-[\nabla F(x_k)-\frac{1}{2}\nabla^2F(x_k)c_k]^{-1}F(x_k)$$
+$$x_{k+1}=x_k+d_k, 0\leq k$$
+
+
+
+\subsection{Méthode de Chebychev}
+
+
+Chebyshev proposa une méthode d'ordre deux en 1841, de convergence cubique :
+\begin{equation}
+x_{k+1}=x_k-\nabla F(x_k)^{-1}F(x_k)-\frac{1}{2}\nabla F(x_k)^{-1}\nabla^2F(x_k)[\nabla F(x_k)^{-1}F(x_k)]^2
+\label{equ:cheb}
+\end{equation}
+ce qui revient à résoudre :
+$$F(x_k)+\nabla F(x_k)c_k=0 \Leftrightarrow c_k=-\nabla F(x_k)^{-1}F(x_k)$$
+$$F(x_k)+\nabla F(x_k)d_k+\frac{1}{2}\nabla^2F(x_k)c_k^2=0 \Leftrightarrow  d_k=-c_k-\frac{1}{2}\nabla F(x_k)^{-1}\nabla^2F(x_k)c_k^2$$
+$$x_{k+1}=x_k+d_k, 0\leq k$$
+
+
+
+
+\subsection{Méthode d'extrapolation d'ordre trois}
+
+% En considérant chacune de ces méthodes comme des directions de déplacement,
+%  on génère de nouveaux algorithmes. Globalement, on peut résumer ces méthodes
+%  comme suit:\\
+
+Les méthodes présentées peuvent être résumées comme suit. Soit $F$ une fonction de $\mathbb{R}^n$
+dans $\mathbb{R}^n$. Chaque méthode est vu comme une direction de déplacement avec laquelle une 
+suite d'itérés sont construits \[x_{k+1}=x_k+d_k\]
+La condition nécessaire du premier ordre doit être satisfaite, on cherche $x^*$ tel que 
+\[F(x^*)=0\]
+La méthode de Newton revient à résoudre le système : 
+\[F(x)+\nabla F(x)d_N=0\]
+Celle de Halley revient à faire : 
+\[F(x)+\nabla F(x) d_H+\frac{1}{2} \nabla^2 F(x)d_N d_H=0\]
+Et celle de Chebychev :
+\[F(x)+\nabla F(x) d_C+\frac{1}{2}\nabla^2 F(x)d_Nd_N=0\]
+
+
+% \red 
+\`A partir de ces directions de Halley, Newton et Chebyshev, on peut développer de nouvelles méthodes sur le même plan
+mais à un ordre supérieur : 
+\[ F(x)+\nabla F(x)d+\frac{1}{2}\nabla^2 F(x){
+d_1d_2}+\frac{1}{6}\nabla^3 F(x){
+ d_3d_4d_5}=0\]
+o\`u la direction recherchée est $d$ et les directions $d_i$ sont des directions connues.
+
+
+% Ces méthodes peuvent être illustrées par les dessins présentés ici. Ils représentent les zones de convergence (ou bassin d'attractions) de chaque méthode, c'est-à-dire les surfaces à l'intérieur desquelles un point de départ x0 va converger vers une solution donnée en un nombre déterminé d'itérations. On observe, dépendamment de la méthode choisie, des surfaces plus ou moins grandes et plus ou moins homogènes. Ces bassins d'attractions résument l'information sur les convergences des méthodes.
+
+
+% \section{Méthode de Super-Halley}
+% $$x_{k+1}=x_k-[I+\frac{1}{2}L(x_k)(I-\alpha L(x_k)^{-1}]\nabla F(x_k)^{-1}F(x_k)$$
+% o\`u $$L(x)=\nabla F(x){-1}\nabla^2 F(x)\nabla F(x)^{-1}F(x)$$
+
+
+
+
+
+Les méthodes qui viennent d'être présentées ne sont pas universelles et souffrent des 
+mêmes défauts que la méthode de Newton à savoir que la convergence est seulement locale et les fonctions
+doivent être k-lipschitziennes. Comme la plupart des algorithmes en optimisation, il
+n'existe pas de méthode meilleure que toutes. Dans certains cas de figure, les méthodes qui sont a priori
+moins efficaces; c'est-à-dire de moins bonne convergence, peuvent résoudre certains programmes non linéaires en moins d'itérations.
+
+
+\section{Ordre de la complexité}
+\label{chap1:ordre}
+
+La borne des complexités des co\^uts théoriques est connue, d'après Griewank \cite{Iri89onautomatic},
+le co\^ut d'évaluation du gradient nécessite jamais plus cinq fois le co\^ut de l'évaluation
+de la fonction en mode inverce et $n$ fois le co\^ut de l'évaluation en mode direct.
+ Cependant, nous verrons que les procédés de différentiation automatique pour des dimensions élevées dépendent de la capacité de stockage.
+Dans l'article de Mihael et Stephan Ulbrich \cite{Ulbrich}, les bornes de complexité suivantes sont données :
+
+
+Borne de complexité en mode direct: \\
+$$(n+1)\#(f) \leq \#(f,\nabla f)\leq (3n+1)\#(f)$$
+$$\frac{n^2+3n+2}{2}\#(f) \leq \#(f,\nabla f,\nabla^2f)\leq \frac{7n^2+11n+2}{2}\#(f)$$
+
+Borne de complexité en mode inverse: \\
+% (W. Baur et V. Strassen\cite{Baur}) 
+\begin{equation*}
+\#(f,\nabla f)\leq 4\#(f)
+\tag{W. Baur et V. Strassen\cite{Baur}}
+\end{equation*}
+\begin{equation*}
+\#(f,\nabla^2 f)\leq 16n\#(f)
+\end{equation*}
+
+
+
+
+
+Bien qu'il y ait une remarque sur l'opération $\nabla^2 f.d $, aucune complexité n'est donnée.
+
+
+
+\begin{center}
+\begin{tabular}{|l|r|}\hline
+Opération  & co\^ut \\\hline
+Gradient : $\nabla f(x)$ & $\leq 4\#(f)$ \\
+Hessien : $\nabla^2 f(x)$ & $\leq 16n\#(f)$ \\
+Hessien$\times$ vecteur : $\nabla^2 f(x)\cdot v$ & $\mathcal{O}(\#f)$\\
+$\nabla^3 f\times$ vecteur $\times$ vecteur : $\nabla^3 f(x)\cdot v_1\cdot v_2$ & $\mathcal{O}(n\#f)$\\
+$\nabla^3 f\times$ vecteur : $\nabla^3 f(x)\cdot v_1$ & $\mathcal{O}(n^2\#f)$\\
+$\nabla^4 f\times$ vecteur $\times$ vecteur$\times$ vecteur : $\nabla^4 f(x)\cdot v_1\cdot v_2\cdot v_3$ & $\mathcal{O}(n^2\#f)$\\
+Décomposition de Cholesky : $A+E=LDL^T$ & $\mathcal{O}(n^3)$\\
+Changement de la diagonale : $\hat{D}\leftarrow D $ & $\mathcal{O}(n)$\\
+Résolution & $\mathcal{O}(n^2)$\\\hline
+\end{tabular}
+\end{center}
+
+
+
+% Gradient : $\leq 5\times C(f)$\\
+% Hessien : $n C(f)$ \\
+% Hessien$\times$Vecteur : $n \times C(f)$\\
+% Tenseur$\times$Vecteur : \\
+% Tenseur$\times$Vecteur$\times$Vecteur : \\
+% Factorisation pour inversion et résolution : $\mathcal{O}(n^3)$\\
+% Changement de la diagonale : $\mathcal{O}(n)$\\
+% Résolution : $\mathcal{O}(n^2)$\\
+
+
+\subsection{Newton modifié}
+Pour calculer la direction de Newton modifiée, le calcul du gradient et du hessien sont
+ nécessaires. En effet, la direction est obtenue en résolvant le système
+$$\nabla^2 f(x)d_N=-\nabla f(x)\leftrightarrow d_N=-\left[\nabla^2 f(x)\right]^{-1}\nabla f(x)$$
+la matrice $\nabla^2 f(x)$ est carrée et symétrique puisque
+ \begin{align*}
+\left[\nabla^2 f(x)\right]_{ij} & =\frac{\partial^2 f(x)}{\partial x_i \partial x_j} \\
+				& = \frac{\partial^2 f(x)}{\partial x_j \partial x_i} \\
+				& = \left[\nabla^2 f(x)\right]_{ji} 
+\end{align*}
+
+
+\begin{algorithm}                     % enter the algorithm environment
+\caption{Direction de Newton modifiée}          % give the algorithm a caption
+\label{alg:2}                           % and a label for \ref{} commands later in the document
+\begin{algorithmic}  
+\STATE \textbf{Préalables:} %Variables en entrée :  
+\begin{itemize}
+\item[$\bullet$] $\nabla f(x)\in \mathbb{R}^n$ le gradient en $x$
+\item[$\bullet$] $\nabla^2 f(x)\in \mathbb{R}^{n\times n}$ le hessien en $x$
+\end{itemize}
+\STATE \textbf{Variable en sortie:} $r$
+% \hline
+\STATE $g \leftarrow \nabla f(x)^T$
+\STATE $H \leftarrow \nabla^2 f(x)$
+\STATE $A,P \leftarrow $ décomposition de $H$
+\COMMENT{$P$ étant la matrice de permutation}
+\STATE $A' \leftarrow$ modification de la diagonale de $A$
+\STATE $d_N \leftarrow$ résolution($A',\ P,\ g)$ 
+\COMMENT{Résolution du système $A^{''}x=g$ o\`u $A^{''}$ est la matrice $A'$ avec les bonnes permutations}
+
+%[Résolution du système $A^{''}x=g$ o\`u $A^{''}$ est la matrice $A'$ avec les bonnes permutations]
+
+\STATE $r\leftarrow (d_N,A',P)$ 
+\COMMENT{On retourne la direction mais aussi la
+ décomposition et la permutation que l'on pourra réutiliser par la suite}
+\end{algorithmic}
+\end{algorithm}
+
+
+% Le nombre d'addition requis pour cette décomposition est $\frac{1}{6}n^3+\frac{3}{2}n^2$ et  $\frac{1}{6}n^3+n^2$ 
+
+% \begin{verbatim}
+% function [d,g,h,ABmod,Ipiv]= Dn(x,n,m)
+%     g=G(x,n,m);
+%     h=H(x,n,m);
+%     [ABmod , Ipiv] = mfact(h);
+%     d=-msol(ABmod,Ipiv,g)
+% endfunction
+% \end{verbatim}
+
+
+
+% \begin{frtheoreme}(Cauchy \cite{cauchy})
+% Soit $X=\\mathbb{R}$, $F=f\in C^2$, $x_0 \in X$, $f'(x_0)\neq 0$, $\sigma_0=-f(x_0)/f'(x_0)$, $\eta=\lvert \sigma_0 \rvert$,\\
+% $I=\left\{\begin{array}{rcl}
+% [x_0,\ x_0+2\sigma_0] & \mbox{si} & \sigma_0 \geq 0 \\
+% [x_0+2\sigma_0,\ x_0] & \mbox{si} & \sigma_0<0 \\
+% \end{array}\right.$\\
+% Et $\lvert f^{''}(x) \rvert \leq K$ dans $I$. Alors, on a le résultat suivant :\\
+% $(i)$ Si \\
+% $2K\eta < \lvert f'(x_0)\rvert$,
+% alors \ref{} a une unique solution $x^*$ dans $I$\\
+% $(ii)$ Si $\lvert f'(x)\rvert \geq m$ dans $I$ et \\
+% $2K\eta < m$,\\
+% alors la séquence de Newton {$x_k$} commençant à $x_0$ satisfait :\\
+% $\lvert x_{k+1} \rvert \leq \frac{K}{2m}\lvert x_k -x_{k-1} \rvert^2$, $k\geq 1$\\
+% et \\
+% $x^* \in [x_k, \ x_k+2\sigma_k] $, o\`u $\sigma_k =-f(x_k)/f'(x_k)=k_{k+1}-x_k$, et ainsi \\
+% $\lvert x^*-x_k \lvert \leq 2\x_{k+1}-x_k\rvert$ ($k\geq 0$)\\
+% $\leq \frac{K}{m}\lvert x_k-x_{k-1}\rvert^2 (k\geq 1)$ \\
+% $\leq 2\eta\left( \frac{K\eta}{2m} \right)^{2k-1} (k\geq 0)$ 
+% \end{frtheoreme}
+
+
+La matrice $\nabla^2 f(x)$ est factorisée pour pouvoir réutiliser la décomposition. 
+$P$ est un vecteur qui contient les informations concernant la place les blocs $2\times 2$
+et les permutations à faire.
+
+
+Complexité par itération : calcul du hessien $\nabla^2 f(x)$ + factorisation + changement de la diagonale + résolution.
+Ce qui a un comportement en $\frac{n^3}{3}+n^2$ et la convergence est quadratique.
+
+
+\subsection{Chebychev}
+
+Pour calculer la direction de Chebychev $d_C$, on va réutiliser le calcul 
+de la direction de Newton qui appara\^it plusieurs fois dans l'équation \eqref{equ:cheb}. %ligne 505
+
+\begin{algorithm}                     % enter the algorithm environment
+\caption{Direction de Chebychev}          % give the algorithm a caption
+\label{alg:3}                           % and a label for \ref{} commands later in the document
+\begin{algorithmic}  
+\STATE \textbf{Préalables:} %Variables en entrée :  
+\begin{itemize}
+\item[$\bullet$] $\nabla f(x)\in \mathbb{R}^n$ le gradient en $x$
+\item[$\bullet$] $\nabla^2 f(x)\in \mathbb{R}^{n\times n}$ le hessien en $x$
+\item[$\bullet$] La fonction $g\in \mathbb{R}^n\times\mathbb{R}^n \rightarrow \mathbb{R}^{n} : u,\ v \mapsto \nabla^3 f(x)\cdot u\cdot v$ qui fait le calcul en fonction
+de deux vecteurs quelconques $u$ et $v$
+\item[$\bullet$] $(d_N,A',P)\leftarrow$ Direction de Newton
+\end{itemize}
+% \STATE Variables en entrée :  $g : v,\ y \mapsto \nabla^3 f(x).v.y$, $r \leftarrow$ Direction de Newton
+% [$\mapsto$ indique qu'il s'agit d'une fonction, nous n'avons pas besoin de $\nabla^3 f(x)$ en entier]
+
+\STATE \textbf{Variable en sortie :} $d_C$
+\STATE $w \leftarrow \nabla^3 f(x) \cdot d_N \cdot d_N = g(d_N,d_N)$
+\STATE $d \leftarrow$ résolution($A',\ P,\ w)$ 
+\STATE $d_C \leftarrow d_N-\frac{1}{2}d$
+\end{algorithmic}
+\end{algorithm}
+
+
+ $w=\nabla^2 (F(x)\cdot d_n)\cdot d_n$ contient un tenseur $\times$ vecteur$\times$ vecteur donc un vecteur\\
+ $A'$ contient la décomposition de A avec les éléments diagonaux modifiés.
+
+Pour calculer la direction de Chebychev, on utilise le fait qu'on a déjà calculer la direction
+de Newton et on réutilise la factorisation pour résoudre le système.
+
+
+Complexité par itération : $\#(d_N)$+ $\nabla^3 f(x)\cdot d\cdot d$ + Résolution ce qui
+est équivalent à $\frac{n^3}{3}+(2+C)n^2$
+Convergence cubique.
+
+
+
+
+
+
+
+
+
+
+\subsection{Halley}
+
+Pour calculer la direction de Halley $d_H$, on va réutiliser le calcul 
+de la direction de Chebychev et de Newton. Voir l'algorithme \ref{alg:4}
+
+\begin{algorithm}                     % enter the algorithm environment
+\caption{Direction de Halley}          % give the algorithm a caption
+\label{alg:4}                           % and a label for \ref{} commands later in the document
+\begin{algorithmic}  
+\STATE \textbf{Préalables:} %Variables en entrée :  
+\begin{itemize}
+\item[$\bullet$] $\nabla f(x)\in \mathbb{R}^n$ le gradient en $x$
+\item[$\bullet$] $\nabla^2 f(x)\in \mathbb{R}^{n\times n}$ le hessien en $x$
+\item[$\bullet$] La fonction $g\in \mathbb{R}^{n} \rightarrow \mathbb{R}^{n\times n} : u \mapsto \nabla^3 f(x)\cdot u$ qui effectue
+ le produit scalaire du tenseur $\nabla^3 f(x)$ et d'un vecteur
+\item[$\bullet$] $(d_N,A',P)\leftarrow$ Direction de Newton
+\item[$\bullet$] $d_C\leftarrow$ Direction de Chebychev
+
+\end{itemize}
+% \STATE Variables en entrée :  $g : v,\ y \mapsto \nabla^3 f(x).v.y$, $r \leftarrow$ Direction de Newton
+% [$\mapsto$ indique qu'il s'agit d'une fonction, nous n'avons pas besoin de $\nabla^3 f(x)$ en entier]
+
+\STATE \textbf{Variable en sortie :} $d_C$
+\STATE $A \leftarrow \nabla^3 f(x) \cdot d_N$
+\STATE $M \leftarrow \frac{1}{2}A+\nabla^2 f(x)$
+\STATE $d_H \leftarrow$ résolution($Md_H=\nabla f(x)^T)$ 
+\end{algorithmic}
+\end{algorithm}
+
+Complexité par itération : $\#(d_C)$+ $\nabla^3 f(x)\cdot v$ + Décomposition de Cholesky modifié +
+Changement de la diagonale + Résolution \\
+Soit un co\^ut de $\frac{1}{3}n^3+(2+C+D)n^2$ o\`u $C$ et $D$ sont des constantes dépendantes de l'efficacité du logitiel de DA.
+Pour rappel, cette méthode a une convergence cubique.
+
+
+\subsection{Extrapolation d'odre trois}
+
+
+\begin{algorithm}                     % enter the algorithm environment
+\caption{Direction d'extrapolation d'odre trois}          % give the algorithm a caption
+\label{alg:3}                           % and a label for \ref{} commands later in the document
+\begin{algorithmic}  
+\STATE \textbf{Préalables:} %Variables en entrée :  
+\begin{itemize}
+\item[$\bullet$] $(d_N,A',P)\leftarrow$ Direction de Newton
+\item[$\bullet$] $d_C \leftarrow$ Direction de Cheychev 
+\item[$\bullet$] La fonction $g: u,\ v \mapsto \nabla^3 f(x)\cdot u\cdot v$ qui fait le calcul en fonction
+de deux vecteurs quelconque $u$ et $v$
+\item[$\bullet$] La fonction $h: u,\ v,\ w \mapsto \nabla^4 f(x)\cdot u\cdot v\cdot w$
+\end{itemize}
+\STATE \textbf{Variable en sortie :} $d_3$
+\STATE $d \leftarrow 2d_C-d_N$
+\STATE $v \leftarrow$ $\nabla^3 f(x).d.d_N$
+\STATE $w\leftarrow$ résolution($A',\ P,\ v)$ 
+\STATE $z\leftarrow\nabla^4 f(x).d_N^3=h(d_N,d_N,d_N)$
+\STATE $t\leftarrow$ résolution($A',\ P,\ z)$ 
+\STATE $d_3 \leftarrow d_N-\frac{1}{2}w-\frac{1}{6}t$
+\end{algorithmic}
+\end{algorithm}
+
+
+Complexité par itération : $\#(d_C)$+  $\nabla^3 f(x)\cdot d\cdot d$ +  $\nabla^4 f(x)\cdot d\cdot d\cdot d$ + $2\times$ Résolution.
+Le co\^ut total est de l'ordre de $\frac{1}{3}n^3 +(3+C+E)n^2$ o\`u $C$ et $E$ vont dépendre de l'outil de DA.
+La convergence est quartique.
+
+
+
+\subsection{Résumé}
+Résumons l'ordre de convergence et la complexité des calculs sous forme d'un tableau. Les résolutions des systèmes linéaires
+et la modification de la diagonale sont négligés par rapport aux autres calculs.\\
+
+\begin{tabular}{|l|c|c|c|}\hline
+Méthode & Ordre du co\^ut & Convergence \\
+\hline
+Newton modifié& $\frac{1}{3}n^3+n^2$ & quadratique\\
+Chebychev & $\frac{1}{3}n^3+(2+C)n^2$  & cubique \\
+Halley & $\frac{1}{3}n^3+(2+C+D)n^2$ & cubique \\
+Extrapolation d'ordre 3 & $\frac{1}{3}n^3 +(2+C+E)n^2$  & quartique \\
+\hline
+\end{tabular}\\
+
+Ainsi, on peut observer que pour le même ordre de complexité, la convergence de l'algorithme de 
+Chebychev est meilleure que celle de Newton. Si nous arrivons à atteindre les bornes théoriques des calculs, la méthode 
+de Chebychev devrait prendre moins de temps d'éxecution surtout pour des dimensions plus élevés pour atténuer la constante $C$.
+De plus, il va être intéressant de comparer les méthodes classiques avec l'extrapolation d'ordre trois puisqu'elle a une meilleure
+convergence.
+
+
+
+\subsection{Precision des objectifs}
+Maintenant que nous avons présenter les algorithmes, nous pouvons mieux préciser les objectifs du présent travail.
+Le but est d'adapter une libraire sous scilab et d'être capable de fournir les dérivées des fonctions qui vérifient
+les complexités exposées en \ref{chap1:ordre}.
+Nous voulons exploiter au mieux l'utilisation de DA afin d'obtenir des temps de calcul raisonnable pour 
+effectuer plusieurs centaines d'itérations de calcul de gradient et hessien par vecteur et tenseur par vecteurs. 
+De plus, pour les méthodes, il faut pouvoir obtenir la décomposition de Cholesky modifiée et être capable
+de résoudre des systèmes triangulaires.
+Il est possible d'écrire l'ensemble du code des dérivées à la main mais la DA a fait suffisamment de progrès 
+pour obtenir des résultats performants. Nous allons analyser les processus de la différentiation automatique dans 
+l'obtention des dérivées.
+
+%Nous verrons aussi les limitations d'un outil (Tapenade).
+
+
+% \subsection{Halley}
+% Complexité : $C(d_N)+$ Tenseur$\times$Vecteur
+
+
+
+
+
+
+
+\section{Différentiation automatique}
+
+La DA est une technique introduite il y a une cinquantaine d'années permettant de calculer les dérivées d'une fonction
+ écrite sous forme d'un programme source. Dans le cas par transformation de code, cela va produire un code adjoint. Il est parfois écrit
+à la main mais la DA a suffisamment fait de progrès pour générer un code en quelques minutes (pour les gros programmes) et 
+d'une qualité comparable. \cite{diffautoopa}
+
+
+
+
+% explication de la différentitation automatique : différence avec la
+% différentiation symbolique et par différences finies
+
+\cite{differentiaauto}
+Le but de la DA est de calculer la dérivée d'une fonction spécifiée par
+un programme, un algorithme. Cette méthode de calcul s'oppose à deux autres
+bien connues : la différentiatation symbolique et la différentiation par
+différences finies. La première, que l'on peut retrouver dans maple, 
+utilise l'expression de la fonction pour déterminer sa dérivée.
+Cette techique est très vite limitée d'une part lorsque l'on a des
+expressions un peu complexes et d'autre part parce qu'il faut l'expression de la
+fonction. \\
+Par exemple sur maple, s'il on veut obtenir :
+\[\frac{\partial^3((x^2+y^2)*(\ln(x)-\ln(y)))}{\partial y \partial^2x}\]
+\verb!diff((x^2+y^2)*(ln(x)-ln(y)), y,x$2);!\\
+$\rightarrow$ $-\frac{2y}{x^2}-\frac{2}{y}$
+\\
+
+ La  plupart du temps, il faut différentier un code constitué de
+boucles et de conditions qui est difficilement exprimable par une expression
+mathématique. La différentiatation numérique ou par différences finies
+s'appuie sur l'expression théorique de la dérivée: 
+$$\lim_{h\rightarrow 0}\frac{f(x+h)-f(x)}{h}$$
+Dans le cas à plusieurs dimensions:
+$$\lim_{\varepsilon \rightarrow 0}\frac{P(X+\varepsilon \cdot dX)-P(X)}{\varepsilon}$$
+Cependant, il s'agit d'un problème mal conditionné à cause de la
+discrétisation imposée par ordinateur. $h$ doit être choisi dans l'ordre de
+ grandeur de la racine de la précision machine : si $h$ est trop proche de $0$ la
+différence va être mal approximée ; l'écart entre $f(x+h)$ et $f(x)$
+ étant trop faible et si $h$ est trop grand, on s'éloigne de la véritable
+valeur de la dérivée. Ainsi, nous allons voir que la différentiation
+automatique palie à ces deux inconvénients majeurs. \\
+
+
+
+
+
+
+\section{Principes de la différentiation automatique}
+\label{sec:da}
+
+
+
+La DA calcule la dérivée de manière analytique, ainsi il n'y a pas d'erreurs
+d'approximations. \`A chaque fois qu'appara\^it une variable dans le programme source,
+le programme différentié va calculer une variable additionnelle de la même forme : sa différentiée.
+Il est à noté que la DA n'est pas capable de fournir l'expression mathématique de la dérivée, puisqu'elle ne fournit que du
+code. Elle ne fournit que le code permettant son évaluation.
+Il existe deux manières d'utiliser la DA, soit le code est transformé pour obtenir un nouveau programme qui
+calculera directement la différentiée, soit par surcharge des opérateurs. Nous allons descrire en détail l'approche par transformation.
+Pour la deuxième approche, il s'agit d'ajouter aux fonctions de base (l'addition, cos, log) les opérations de dérivations.
+
+
+
+
+
+
+
+Par exemple, en prenant {\tt x}, {\tt y}, {\tt z} comme variables et {\tt V} comme vecteur,
+lors de l'instruction :\\
+$${\tt x= y*V(10)+z}$$\\
+le programme différentié va  calculer :
+$$\dot{\tt x}= \dot{\tt y}*{\tt V(10)} + {\tt y}*\dot{\tt V}{\tt(10)}+\dot{\tt z} $$
+en utilisant les règles de dérivations usuelles sur les fonctions. Il n'y a plus
+d'approximations, c'est un calcul exact. 
+Le principe est de considérer que chaque programme peut s'écrire comme une séquence
+d'instructions.
+$$I_1;I_2;...;I_{p-1};I_{p}$$
+
+Cette suite peut être identifiée comme une composition de fonctions 
+
+$$f=f_p\circ f_{p-1} \circ \cdots \circ f_1$$
+
+par la règle de dérivation sur la composition~(\ref{annexe:A}) on obtient :\\
+
+\begin{align*}
+f'(X) = & (f'_p\circ f_{p-1} \circ f_{p-2} \circ ... \circ f_1(X))\\
+& . (f'_{p-1} \circ f_{p-2} \circ ... \circ f_1(X))\\
+& \cdots\\
+& . f'_1(X)\\
+= & f'_p(W_{p-1}) . f'_{p-1}(W_{p-2}) . \cdots .f'_1(W_0)\\
+\end{align*}
+En notant $W_0=X$ et $W_k=f_k(W_{k-1})$
+
+Comme plusieurs données sont traitées, tous les $f'_k$ sont des matrices Jacobiennes de 
+taille relativement grande dans un cas général. Calculer la différentiée revient à calculer
+les multiplications de ces matrices. Cependant, il n'est pas possible de calculer en un co\^ut 
+raisonnable ce produit. Par exemple, avec 10 variables, si on effectue une quinzaine d'instructions
+cela revient à faire de l'ordre de $10^4$ opérations. La complexité est exponentielle. Dans la plupart
+des cas, l'application qui utilise $f'(X)$  n'a en réalité que besoin d'une direction de la jacobienne :
+ $f'(X).\dot{X}$ pour une certain vecteur $\dot{X}$.
+Nous allons voir les deux modes de différentitation, le mode tangent et le mode inverse. Dans le premier mode, 
+les calculs de la fonctions se propagent parallèlement aux dérivées tandis que dans le mode inverse, le calcul
+s'effectue à rebours en partant de la fin du code.
+
+
+
+
+
+
+
+    \subsection{Mode tangent}
+
+Dans notre cas, comme par exemple pour la direction de Newton : $d_N = -F'(x)^{-1}.F(x)$, la dérivée est multipliée
+par $F(x)$ un vecteur. En prenant cela en compte, le calcul va être largement simplifié. $\dot{Y}=f'(X).\dot{X} $
+
+$$\dot{Y}=f'_p(W_{p-1}) . f'_{p-1}(W_{p-2}) . \cdots .f'_1(W_0).\dot{X}$$\\
+
+Pour profiter de la multiplication avec le vecteur, le calcul va se faire de droite à gauche afin d'éviter d'avoir des multiplications de 
+Matrice$\times$Matrice mais plut\^ot Matrice$\times$Vecteur. De plus, de cette manière, les appels aux $W_i$ vont
+se faire dans l'ordre, donc en même temps qu'ils seront calculés. Cette méthode donne une combinaison linéaire des 
+colonnes de la matrice Jacobienne.
+Voici un exemple illustré pour la fonction $f(x_1,x_2)=(x_1-cos(x_2))^2$. Dans le Graphe Acyclique Orienté (GAO) \ref{fig:gao} , le 
+gradient de chaque quantité en partant des feuilles va être propagé.
+
+
+\begin{figure}
+\caption{GAO : $f(x_1,x_2)=(x_1-cos(x_2))^2$ pour évaluer la fonction, le parcours se fait 
+à partir des feuilles de l'arbre jusqu'à la racine.}
+\begin{center}
+\fbox{
+\begin{minipage}[c]{0.45\textwidth}
+\beginpgfgraphicnamed{figures/figure_14}
+\endpgfgraphicnamed
+\end{minipage}
+}
+\end{center}
+\label{fig:gao}
+\end{figure}
+
+
+
+
+% \floatstyle{ruled}
+% \newfloat{Program}{tbp}{lop}[section]
+% \begin{Program}
+% \begin{verbatim}
+% . . . program text . . .
+% \end{verbatim}
+% \caption{. . . caption . . . }
+% \end{Program}
+
+
+
+
+
+
+
+
+\begin{figure}
+\caption{GAO : mode tangent, il suit le même parcours que celui de l'évaluation}
+\begin{center}
+\fbox{
+\begin{minipage}[c]{0.6\textwidth}
+\beginpgfgraphicnamed{figures/figure_11}
+\endpgfgraphicnamed
+\end{minipage}
+}
+\end{center}
+\label{fig:modetangent}
+\end{figure}
+
+
+
+\vspace{1cm}
+\begin{tabular}{|l|c|l|c|c|}
+  \hline
+  $y$ & Valeurs de $y$ & $\dot{y}$ & Valeurs de $\dot{y}$ & Valeurs vectorielles
+\\
+  \hline
+  $y_1$ &  $x_1$ &  $\dot{y_1}$ & $\dot{x_1}$ & [$1$ \ $0$] \\
+  $y_2$ & $x_2$ & $\dot{y_2}$ & $\dot{x_2}$ & [$0$ \ $1$] \\
+  $y_3$ & $cos(y_2)$ & $\dot{y_3}$ & $-\dot{y_2}sin(y_2)$ & -[$0$ \ $sin(x_2)$]
+\\
+  $y_4$ & $y_1-y_3$ & $\dot{y_4}$ & $\dot{y_1}-\dot{y_3}$ & [$1$ \ $sin(x_2)$]
+\\
+  $y_5$ & $y_4^2$ &  $\dot{y_5}$ & $2\dot{y_4}y_4$ & $2$[$x_1-cos(x_2)$ \
+$(x_1-cos(x_2))sin(x_2)$]\\
+  
+  \hline
+\end{tabular}
+
+
+
+\vspace{1cm}
+
+Le programme généré par la DA évalue simultanément la fonction et le gradient. Le nombre de lignes obtenu
+est environ deux fois celui du programme d'origine puisque chaque affectation est accompagnée du calcul du
+gradient. En général, comme c'est expliqué dans \cite{Iri89onautomatic}, le mode tangent multiplie le nombre
+ d'opérations arithmétiques de $n$. Chaque quantité 
+$x_i$ est précédée du calcul de $\nabla x_i$ de taille $n$. Dans l'exemple, on peut observer que les quantités propagées ont 
+une dimension équivalente au nombre de composante de l'argument. Ainsi, le co\^ut du au calcul du gradient est de l'ordre de 
+$n$ fois le co\^ut de l'évaluation de la fonction.
+\vspace{0.51cm}
+
+
+
+
+
+
+
+% \end{figure}
+
+% 
+
+    \subsection{Mode inverse}
+Le mode inverse va nous permettre d'obtenir une ligne de la Jacobienne c'est-à-dire un gradient par rapport à 
+une composante $k$.
+$$<++>\overline{X}=f'^T(X).\overline{Y}$$ 
+\begin{equation}\overline{X}=f_{1}^{'T}(W_{0}) . f_{2}^{'T}(W_{1}) . \cdots .f_p^{'T}(W_{p-1}) . \overline{Y}
+\label{eq:inv}
+\end{equation}
+L'idée sous-jacente est l'utilisation des quantités adjointes :
+
+$$y_i^*= \frac{\partial f}{\partial y_i} $$
+% $$y_j^*= \sum \frac{\partial f}{\partial y_j}y_i^*$$
+$$\bar{y_j}= \sum_{i \in I_j} \frac{\partial f}{\partial y_j}\bar{y_i}$$
+ $$I_j=\{i | y_j \text{ intervenant dans } y_i\}$$
+
+
+Le parcours du GAO se fait en profondeur; l'évaluation commence par la racine. 
+Commen\c{c}ons par observer ce mode sur notre exemple. Cette fois-ci, le parcours n'est plus le même que 
+l'évaluation de la fonction.
+
+
+\begin{figure}
+\caption{GAO : mode inverse, cette fois ci, l'arbre est parcouru depuis la racine.}
+\begin{center}
+
+
+\fbox{
+\begin{minipage}[c]{0.75\textwidth}
+\beginpgfgraphicnamed{figures/figure_12}
+\endpgfgraphicnamed
+\end{minipage}
+}
+
+
+
+% \beginpgfgraphicnamed{figures/figure_12}
+% \endpgfgraphicnamed
+
+
+
+\end{center}
+\label{fig:modeinverse}
+\end{figure}
+
+
+\vspace{1cm}
+\begin{tabular}{|l|c|}
+  \hline
+  $y$ & Valeurs de $y$ \\
+  \hline
+  $y_1$ & $x_1$ \\
+  $y_2$ & $x_2$ \\
+  $y_3$ & $cos(y_2)$ \\
+  $y_4$ & $y_1-y_3$ \\
+  $y_5$ & $y_4^2$ \\
+  \hline
+\end{tabular}
+\hspace{1cm}
+\begin{tabular}{|l|c|c|}
+  \hline
+ $\bar{y}$ & Valeurs de $\bar{y}$ & Valeurs \\
+  \hline
+ $\bar{y_5}$ & $1$ & $1$ \\
+ $\bar{y_4}$ & $2y_4$ & $2(x_1-cos(x_2))$ \\
+ $\bar{y_3}$ & $-\bar{y_4}$ & $2(cos(x_2)-x_1)$ \\
+ $\bar{y_2}$ & $-\bar{y_3}sin(x_2)$ & $2(x_1-cos(x_2))sin(x_2)$ \\
+ $\bar{y_1}$ & $\bar{y_4}$ & $2(x_1-cos(x_2))$ \\
+  \hline
+\end{tabular}\\
+
+
+%D'après Griewank \ref{Iri89onautomatic}, {\bf le co\^ut d'évaluation du gradient nécessite jamais plus cinq fois le co\^ut de l'évaluation de la fonction}.
+Dans \ref{eq:inv}, l'opération doit se faire encore de droite à gauche pour que le calcul soit efficace. Malheureusement, cette fois-ci,
+nous n'avons pas les appels aux $W_i$ dans le même ordre qu'ils sont calculés; cela vient du fait que le parcours
+n'est plus dans le même sens. Dans l'exemple, à la deuxième étape, la 
+quantité $y_4$ est nécessaire, elle fait intervenir $y_1$ et $y_2$ alors que ces états n'ont pas encore été parcourus.
+Ainsi, il existe deux stratégies pour obtenir les $W_i$. Soit on recalcule toutes les quantités, soit on les mémorisent toutes.
+
+
+
+
+    \subsection{Stratégies de la DA pour le mode inverse}
+% point noir stockage
+% point blanc
+% 
+% $\overline{I_k} \rightarrow \overline{W_{k-1}}=f_k^{'T}(W_{k-1}).\overline{W_k}$
+% 
+
+ \paragraph{Recompute-All}
+%  \\
+Pour chaque terme $W_p=f_k(W_{p-1})$, on recalcule l'ensemble de la suite $W_i$ à chaque fois. L'opération $W_1 =f'(X)$ va être effectuée $p$ fois. Cette méthode demande plus de temps d'éxecution puisque les termes ne sont pas mémorisés, les mêmes 
+calculs sont effectués plusieurs fois. Les points noirs représentent le stockage de $W_k$ sur la pile
+d'exécution et les points blancs représent un dépilement.
+
+
+\vspace{1cm}
+\begin{figure}
+\caption{Stratégie RA : pour chaque quantité à calculer, on reparcours le graphe pour faire un pas dans l'algorithme inverse. Prend moins de place mais
+plus de temps.}
+\fbox{
+\begin{minipage}[c]{0.9\textwidth}
+\beginpgfgraphicnamed{figures/figure_3}
+\endpgfgraphicnamed
+\end{minipage}
+}
+\label{fig:ra}
+\end{figure}
+\vspace{1cm}
+
+
+ \paragraph{Store-All}
+Cette fois ci, tous les termes vont être calculés et enregistrés une seule fois. Il s'agit d'une
+méthode qui necessite plus de mémoire. Le co\^ut en mémoire est linéaire par rapport à $p$.
+
+
+\vspace{1cm}
+\begin{figure}
+\caption{Stratégie SA : le graphe des évaluations est parcouru une seule fois pour toutes les mémoriser, l'algorithme inverse n'aura plus qu'à dépiler. Prend
+moins de temps mais plus de capacité de stockage.}
+\begin{center}
+
+
+\fbox{
+\begin{minipage}[c]{0.9\textwidth}
+\beginpgfgraphicnamed{figures/figure_4}
+\endpgfgraphicnamed
+\end{minipage}
+}
+
+% \beginpgfgraphicnamed{figures/figure_4}
+% \endpgfgraphicnamed
+
+\end{center}
+\label{fig:sa}
+\end{figure}
+\vspace{1cm}
+
+
+
+Dans les deux cas, si le problème a une dimension trop grande, ni la strategie RA, ni la SA ne pourra être
+efficace. Une méthode alternative appara\^it comme un bon compromis : le {\it Checkpointing}.
+L'idée est de décomposer le programme en plusieurs parties, si possible imbriquées et d'effectuer une sauvegarde, un {\it snapshots},
+des quantités entre chaque. Encore peu de travail a été effectué sur la comparaison de l'emplacement de ces {\it Checkpoints} et cela
+reste une problème ouvert. Il n'y a pour l'instant pas d'emplacement optimal connu pour un algorithme quelconque. Néanmoins, 
+ils seront évidemment placés à l'extérieur des sous-routines ou des boucles. A partir des ces 
+sauvegardes on peut soit appliquer la méthode RA sur la sous partie du code comme l'illustre la figure \ref{fig:checkpointra}, soit
+la méthode SA \ref{fig:checkpointsa}. C'est la deuxième qui a été retenue par Tapenade car la taille de la pile est dans ce cas 
+raisonnable et l'exécution d'empilement et de dépilement sont rapides.
+
+
+\vspace{1cm}
+\begin{figure}
+\caption{Checkpoint RA - on effectue des sauvegardes à certains
+noeuds du GAO et entre chacun de ces noeuds on adopte une stratégie de tout recalculer.}
+\begin{center}
+\fbox{
+\begin{minipage}[c]{0.9\textwidth}
+\beginpgfgraphicnamed{figures/figure_5}
+\endpgfgraphicnamed
+\end{minipage}
+}
+\end{center}
+% \beginpgfgraphicnamed{figures/figure_5}
+% \endpgfgraphicnamed
+\label{fig:checkpointra}
+\end{figure}
+\vspace{1cm}
+
+\begin{figure}
+\caption{Checkpoint SA - là aussi, on sauvegarde les données à certains noeuds mais entre
+chaque on utililise une stratégie de tout mémoriser.}
+
+
+\fbox{
+\begin{minipage}[c]{0.9\textwidth}
+\beginpgfgraphicnamed{figures/figure_6}
+\endpgfgraphicnamed
+\end{minipage}
+}
+
+
+
+% \beginpgfgraphicnamed{figures/figure_6}
+% \endpgfgraphicnamed
+\label{fig:checkpointsa}
+\end{figure}
+\vspace{1cm}
+
+
+
+
+\section{Implantation de la DA}
+
+Deux possibilités s'offrent, soit la surcharge des opérateurs, plus flexible, soit la transformation du code.
+
+\subsection{La surcharge des opérateurs}
+
+\paragraph{Programmation paresseuse}
+
+Pour commencer à me familiariser avec la différentiation automatique, j'ai d'abord essayé de 
+concevoir un programme qui dérive en programmation fonctionnelle. D'après l'article de Karczmarczuk \cite{paresseuse}, il est possible 
+de calculer la différentiation automatique avec un langage fonctionnel de manière paresseuse.
+La sémantique du programme original va être étendu par surcharge des opérateurs en utilisant
+les règles usuelles de dérivation. Par exemple, la règle de Leibniz $(fg)'=f'g+fg'$ o\`u la règle
+d'encha\^inement : $(f(g(x))'=f'(g(x))g(x)$. Pour toutes opérations élémentaires, nous allons surcharger
+par les opérations de dérivations. Pour cela on considère une paire $(e,e')$ qui représente la valeur
+orgininal et sa dérivée. De cette manière les constantes seront représentées par $(c,0)$ et la variable
+$(x,1)$. Toutes les opérations vont être surchargé pour ce type : $(f,f')+(g,g')=(f+g,f'+g')$, 
+$(f,f')\cdot(g,g')=(f\cdot g,f'\cdot g+f\cdot g')$, $cos(f,f')=(cos(f),cos(f)\cdot f')$ et ainsi de suite.
+
+Le langage fonctionnel que j'ai choisi est caml. On commence par définir un type expression qui traduit les opérations élémentaires. Comme il
+ s'agit d'un exemple, la liste est non exhaustive. Le type expression est d'abord introduit, il va nous permettre d'analyser le type d'opération.
+En caml, il est impossible de faire un "match" sur une fonction par exemple : \begin{verbatim}| cos -> sin \end{verbatim}
+c'est pour cette raison qu'expression est un constructeur de type. 
+
+{\small
+\begin{verbatim}
+type expression= 
+    Const of float
+  | Var of string
+  | Opp of expression
+  | Plus of expression*expression
+  | Moins of expression*expression
+  | Mult of expression*expression
+  | Quot of expression*expression
+  | Puiss of expression*float
+  | Cos of expression
+  | Sin of expression
+  | Exp of expression
+  | Log of expression
+;;
+\end{verbatim}
+}
+Pour différentier nos constantes de nos variables, il faut introduire lors de l'évaluation un
+environement qui fournira la valeur de chaque variable. Par exemple si $x=3.5$ et $y=-2.1$,
+$env=[("x",3.5);("y",-2.1)]$ (les parenthèses ne sont pas nécessaires mais permettent de bien
+comprendre qu'il s'agit d'une liste de couple).
+
+
+De cette manière pour évaluer une expression nous n'aurons plus qu'à faire :
+
+\begin{verbatim}
+let rec evaluer env expr = match expr with
+    Const c-> c 
+  | Var v->(try List.assoc v env with Not_found -> raise(Unbound_variable v))
+  | Opp f-> -.evaluer env f
+  | Plus(f,g) -> evaluer env f +. evaluer env g
+  | Moins(f,g) -> evaluer env f -. evaluer env g
+  | Mult(f,g) -> evaluer env f *. evaluer env g
+  | Quot(f,g) -> evaluer env f /. evaluer env g
+  | Puiss(f,g) ->(evaluer env f)**g
+  | Cos(f) -> cos(evaluer env f)
+  | Sin(f) -> sin(evaluer env f)
+  | Log(f) -> log (evaluer env f)
+  | Exp(f) ->  exp (evaluer env f)
+ ;;
+\end{verbatim}
+
+{\tt List.assoc v env} permet de renvoyer l'élément correspondant à v dans la liste de couple {\tt env}. Avec notre exemple,
+{\tt List.assoc "x" env} retourne {\tt 3.5}. Cette évaluation est la traduction du GAO. Le point après l'opérateur signifie que les composantes sont des float. (Les opérateurs
+ne sont pas surchargés et le \verb!+! est pour les entiers).
+
+
+Pour évaluer la dérivée: 
+
+{\small
+\begin{verbatim}
+let rec derive expr dv =
+    match expr with
+      Const c -> Const 0.0
+    | Var v -> if v = dv then Const 1.0 else Const 0.0
+    | Opp f -> Opp(derive f dv)
+    | Plus(f, g) -> Plus(derive f dv, derive g dv)
+    | Moins(f, g) -> Moins(derive f dv, derive g dv)
+    | Mult(f, g) -> Plus(Mult(f, derive g dv), Mult(derive f dv, g))
+    | Quot(f, g) -> Quot(Moins(Mult(derive f dv, g), Mult(f, derive g dv)),
+                         Mult(g, g))
+    | Puiss(f,g) -> Mult(Const g,Mult(derive f dv,f))
+    | Cos(f) -> Opp(Mult(Sin(f),derive f dv))
+    | Sin(f) -> Mult(Cos(f),derive f dv)
+    | Exp(f) -> Mult(derive f dv,Exp(f))
+    | Log(f) -> Quot(derive f dv,f)
+ ;;
+\end{verbatim}
+}
+
+
+
+
+
+
+
+Afin d'obtenir les dérivées supérieurs nous allons étendre la 
+définition mais sur une liste infinie $f::f'::f''::f^{(3)}\cdots $
+représentant l'expression avec l'ensemble de ses dérivées. 
+De la même manière les constantes seront représetées par $c::0::0\cdots$
+et la variable $x::1::0::0\cdots$. En notant $f=(f_0::\bar f)$ et $g=(g_0::\bar g)$ o\`u $f_0$, $g_0$ sont
+les éléments en tête de liste et $\bar f$, $\bar g$ sont les listes queues, les opérations seront définies :
+$$f+g = (f_0+g_0::\bar f+\bar g)$$
+$$f\cdot g = (f_0\cdot g_0::f\cdot \bar g+\bar f\cdot g)$$
+$$f/g = w \text{  o\`u  }(f_0/g_0::(\bar f\cdot g+f \cdot\bar g)\cdot w^2)$$
+
+
+
+
+On observe que la définition est auto-récursive. Evidemment, nous ne devrons pas évaluer toute la liste mais seulement les 
+dérivées qui nous interessent. Si on essaye d'obtenir {\tt w}, on boucle à l'infini! 
+Etant donné que caml n'est pas un langage paresseux, contrairement à Haskell, il a fallu construire un nouveau type que l'on 
+évaluera uniquement quand nous en aurons besoin.
+
+
+{\small
+\begin{verbatim}
+type 'a glacon =
+| Inconnu of (unit -> 'a)
+| Connu of ' a;;
+\end{verbatim}
+}
+
+
+
+{\small
+\begin{verbatim}
+type 'a liste_paresseuse =
+| Nil
+| Cons of 'a cellule
+and 'a cellule = { hd : 'a; mutable tl : 'a liste_paresseuse glacon};;
+\end{verbatim}
+}
+
+
+
+{\small
+\begin{verbatim}
+let force cellule =
+  let glacon = cellule.tl in
+  match glacon with
+  | Connu valeur -> valeur
+  | Inconnu g ->
+     let valeur = g () in
+     cellule.tl <- Connu valeur;
+     valeur;;
+\end{verbatim}
+}
+
+
+\begin{figure}
+\caption{Temps d'évaluation du gradient en mode direct par surcharge des opérateurs sur 
+des listes et vecteurs avec caml}
+\begin{center}
+\includegraphics[scale=0.6]{figures/caml1.png}
+\end{center}
+\label{fig:caml1}
+\end{figure}
+
+La figure \ref{fig:caml1} illustre le fait que ces opérations impliquent des structures de plus en plus complexes à gérer.
+
+
+
+
+On peut généraliser les listes infinies à plusieurs dimensions avec des dérivées partielles :
+$f=(f_0,[\bar f_1,\cdots, \bar f_n] $ o\`u $\bar f_k=(\partial f/\partial f_k,[\cdots \text{ dérivées de }f_k' \cdots])$.
+L'inconvénient d'une telle méthode est que la structure devient rapidement lourde, les listes sont très dures
+à manipuler lorsqu'elles sont de grandes tailles; $\mathcal{O}(n)$ dans le pire des cas et les vecteurs ne sont pas dynamiques.\\
+
+
+
+
+
+
+\subsection{La transformation du code}
+
+Au lieu de surcharger les opérateurs, le code est analysé pour détecter les variables dépendantes.
+Ensuite, par un procédé analytique, il applique la dérivation sur les opérations usuelles; 
+{\tt sin(x)} est transformé en {\tt cos(x)*xd} o\`u {\tt xd=}$\dot x$ et il rajoute cette ligne
+juste avant.
+
+ Si on reprend le mode tangent sur notre exemple : comme variable de sortie, on a {\tt f} et 
+comme variable d'entrée {\tt x}.\\
+
+
+{\tt
+\begin{tabular}{|l|l|}
+  \hline
+  Code original & Mode tangent \\
+  SUBROUTINE F(x, f) & SUBROUTINE F\_d(x, xd, f, fd) \\
+  \hline
+			& fd = xd(1) + xd(2)*SIN(x(2)) \\
+    f=x(1)-COS(x(2))	& f = x(1) - COS(x(2))\\
+			& fd = 2*f*fd\\
+    f=f**2    		& f = f**2\\  
+  \hline
+\end{tabular}
+}\\
+
+Ainsi, dans le mode tangent, la valeur {\tt fd} renvoie $\nabla F(x).xd$, en scilab 
+{\tt derivative(F,x)*xd}
+Ce code, nommé code adjoint, reste très proche du code d'origine et est impératif, contrairement à la surcharge d'opérateur qui fait 
+appel à des fonctions récursives comme le montre l'exemple. En cela, on peut s'attendre à des temps d'éxecution plus rapide.
+
+Avec le mode inverse : \\
+
+{\tt
+\begin{tabular}{|l|l|}
+  \hline
+  Code original & Mode reverse \\
+  SUBROUTINE F(x, f) & SUBROUTINE F\_b(x, xb, f, fb) \\
+  \hline
+
+
+     f=x(1)-COS(x(2))   &  f = x(1) - COS(x(2)) \\
+     f=f**2	          &  fb = 2*f*fb \\
+			  &  DO ii1=1,2 \\
+			  &    xb(ii1) = 0.D0 \\
+			  &  ENDDO \\
+			  &  xb(1) = fb \\
+			  &  xb(2) = SIN(x(2))*fb \\
+			  &  fb = 0.D0 \\
+			  &  END \\
+  \hline
+\end{tabular}
+} \\
+\vspace{0.5cm}
+\\{\tt xb} renvoie la valeur du gradient, en scilab, {\tt xb=derivative(F,x)*fb}.
+
+
+
+\subsection{Discussion}
+
+La surcharge des opérateurs est plus souple et plus simple à utiliser. Il suffit en général de 
+déclarer un nouveau type de données.
+La transformation de code source se fait en amont et utilise 
+des concepts issus de la compilation arbre de syntaxe. 
+
+
+
+
+    \subsection{L'utilisation de la DA dans notre cas.}
+
+Ce que l'on cherche, c'est obtenir les dérivées successives du code fortran de manière efficace pour 
+une dimension assez grande $n=1000$.
+
+$$F=\nabla f \in \mathbb{R}^n \rightarrow \mathbb{R}^n$$
+Nous voulons calculer $\nabla^2 f\cdot v$.
+
+Pour calculer par différentiation automatique, nous allons utiliser l'astuce 
+suivante :
+
+$$\nabla_x(\nabla_x f(x) \cdot d)) = \nabla_{xx}^2f(x) \cdot d$$ O\`u $d$ représente la direction obtenue.
+Au lieu de calculer la hessien, nous allons appliquer le mode direct sur calcul du gradient par un vecteur.
+Regardons sur un exemple : 
+$$f(x)=x_1^3x_2^2-10x_1x_2-x_2^3$$
+$$\nabla_x f(x)=F(x)=\left( \begin{array}{cc}3x_1^2x_3^2-10x_2 & 2x_1^3x_2-10x_1-3x_2^2\end{array} \right)$$
+$$\nabla_{xx}^2f(x)=\left( \begin{array}{cc}
+6x_1x_2^2 & 6x_1^2x_2-10 \\
+6x_1^2x_2-10 &  2x_1^3-6x_2 \\
+\end{array} \right)$$
+
+
+
+$$d = \left( \begin{array}{c} 1 \\2 \\ \end{array} \right)$$
+
+$$\nabla_xf(x).d=3x_1^2x_2^2-10x_2+4x_1^3x_2-20x_1-6x_2^2$$
+$$\nabla_x(\nabla_x f(x) \cdot d))=
+\left( \begin{array}{cc} 6x_1x_2^2+12x_1^2x_2-20 & 6x_1^2x_2-10+4x_1^3-12x_2 \end{array} \right) $$ 
+
+$$\nabla_{xx}^2f(x).d =
+ \left( \begin{array}{c} 6x_1x_2^2+12x_1^2x_2-20\\6x_1^2x_2-10+4x_1^3-12x_2 \\ \end{array} \right) $$
+
+
+Puisque la matrice hessienne est symétrique, on remarque bien que 
+$$\left( \nabla_{xx}^2f(x).d \right)^T = \nabla_x(\nabla_xf(x).d))$$
+
+
+En mode inverse :
+$$\psi(t)=F(x+t \cdot d)=F(g(t))$$
+$g(t)=x+t \cdot d$ o\`u $d$ représente la direction
+$$\psi'(t)=\nabla F(x+t \cdot d)d$$
+$$\psi'(0)=\nabla F(x)d$$
+
+Ainsi pour obtenir $\nabla^2 f(x)\cdot v$, nous appliquons le mode direct puis le mode inverse.
+
+
+Maintenant que nous venons de voir les principes de foncitonnement, il a fallu
+choisir un outil de différentiation automatique permettant d'implanter 
+efficacement les opérations : $\nabla f$, $\nabla^2 f\cdot v$, $\nabla^2 f$, $\nabla^3 f\cdot u\cdot v$, $\nabla^3 f\cdot u$, 
+$\nabla^4 f\cdot u\cdot v\cdot w$. Malgré le fait 
+qu'il existe actuellement plusieurs outils de DA, le choix n'est pas évident car pour une 
+implémentation efficace il est préférable d'utiliser un outil par transformation de code et 
+le fait d'obtenir des dérivées supérieures est en général un point fort de la surcharge des 
+opérateurs.
+De plus, nous avons du choisir une banque de tests adéquat à notre outils et qui représente 
+suffisamment de cas de figure afin de tester correctement les algorithmes.
+
+
+
+
+
+Un langage très connu de modélisation algébrique en optimisation est AMPL. Développé par Fourer, Gay et 
+Kernighan, il a été con\c{c}u pour résoudre des problèmes complexes de grande dimension. MINOS, IPOPT, 
+SNOPT, KNITRO sont des solveurs externes. Une de ses particularités est qu'il a une synthaxe très proche des
+expression mathématique en optimisation. Malheureusement, aucun outil de DA n'est capable de traiter cette synthaxe.
+
+Une des librairies les plus réputées pour tester des algorithmes d'optimisation est la librairie CUTEr
+ {\it A Constrained and Unconstrained Testing Environment, revisited}, qui fournit une collection de problèmes. Elle 
+fonctionne sur un grand nombre de plate-formes. Les problèmes tests sont écrits en SIF  {\it Standard Input Format}.
+Malheureusement, même s'il ce code peut-être transformé en Fortran, ce code est difficilement exploitable par les outils
+de différentiation automatique qui ne gèrent pas le code SIF.
+
+En revanche il existe une librairie qui est un sous-ensemble de CUTEr, écrite en fortan : celle de Moré, Garbow et Hilstrom (MGH) \cite{355936} 
+et qui est exploitable par les outils de DA.
+ Dans le choix de l'outil de différentiation automatique, Tapenade nous est apparu comme le plus adéquat car il marche
+par transformation de code en mode inverse et direct. De plus il traite et retourne un code en fortran que l'on peut de nouveau différentier.
+ Théoriquement il est possible d'obtenir n'importe quel ordre de dérivation mais nous verrons les limitations de cette méthode et 
+ cet outil a déjà fait ses preuves dans certains milieux (au moins pour le gradient).
+
+
+
+
+
+
+Une fois que l'implantation des dérivées sera faite, le but est de vérifier la convergence des algorithmes
+ et de comparer les co\^uts de calculs des méthodes.
+La libraire de MGH permettra de traiter un large éventail de cas possibles et evaluera la fiabilité et la robustesse des algorithmes.
+
+
+
+
+
+\section{Mise en contexte : La librairie de Moré, Garbow et Hilstrom}
+
+Comme beaucoup de tests en optimisation furent insuffisants et pas toujours révélateurs, Moré, Garbow et Histrom
+ont créé une banque de fonctions dans le but de tester des algorithmes d'optimisation sans contrainte.
+ Nous savons que le point initial a une importance primordiale dans l'algorithme, pour cette raison, ils ont choisi de ne 
+pas toujours le placer dans un voisinage de la solution. 
+\\
+
+Cette librairie va aussi me servir de référence pour pouvoir évaluer si les gradients et hessiens calculés par Tapenade \ref{sec:tapenade}
+ sont exacts. En effet, pour chaque fonction, en changeant les paramètres, le gradient peut être calculé.
+ Comme ces fonctions sont écrites en Fortran, cet outil est bien adapté.
+
+
+
+\subsection{Les routines en fortran; propriétés des fonctions}
+
+
+Pour $f_i : \mathbb{R}^n \rightarrow \mathbb{R}$ pour $i=1, \cdots ,n$, on cherche à résoudre 
+$$\min \left\{\sum_{i=1}^{m}f_i^2(x):x \in \mathbb{R}^n \right\} $$
+
+Chaque routine fournit le vecteur $f(x)$, le scalaire $f(x)^Tf(x)$, la jacobienne de $f$, et le gradient qui est calculé par
+l'opération $ \nabla f(x)=f(x)^T\nabla f(x)$.
+
+
+
+L'entête des fonctions est toujours le même, ce qui va permettre d'automatiser la différentiation.\\
+{\center\tt subroutine getfun( x, n, f, m, ftf, fj, lfj, g, mode)}\\
+{\tt n} : dimension de x, \\
+{\tt x(n)} : vecteur de variables\\
+{\tt f(m)} : vecteur résultat \\
+{\tt ftf} : valeur de la fonction objectif qui vaut la somme des carrés de {\tt f}\\
+{\tt m} : dimension de f, \\
+{\tt fj(m,n)} : matrice jacobienne de f\\
+{\tt g(n)} : contient le produit de la matrice transposée {\tt fj} et du vecteur {\tt f} évalué en x,
+{\tt g} est la moitié du gradient de la somme des carrés de {\tt f}\\
+{\tt mode} : permet d'initialiser ou de choisir les quantités à calculer\\
+
+
+On veut obtenir la dérivée de {\tt ftf} par rapport à {\tt x}. Dans toutes les fonctions, on aura le même cas de figure.
+
+
+
+
+Voir le tableau \ref{tab:mgh} pour la liste des fonctions. Les 19 premiers problèmes ont des variables de taille fixe. Les nombres
+entre parenthèses sont les variables de dimension variable.
+
+
+% X(N)   (DOUBLE)  : Output for MODE < -1 and MODE = 0.
+% C                    When MODE < -1, X is the best-known solution to the
+% C                    problem (if available).
+% C                    When MODE =  0, X is the initial iterate.
+% C N      (INTEGER) : Output for MODE = -1.
+% C                    The number of variables in the problem.
+% C F(M)   (DOUBLE)  : When MODE = ABCD with A > 0, F is the vector of
+% C                    residual functions evaluated at X. Space must be
+% C                    allocated for the vector F whenever GETFUN is
+% C                    called with MODE > 0.
+% C M      (INTEGER) : Output for MODE = -1.
+% C                    The number of residuals in the problem.
+% C FTF    (DOUBLE)  : When MODE = ABCD with B > 0, FTF contains the sum
+% C                    of squares of the residuals evaluated at X.
+% C                    For MODE < -1, FTF is the smallest known value
+% C                    of the sum of squares.
+% C FJ(M,N) (DOUBLE) : When MODE = ABCD > 0 with C > 0, FJ contains
+% C                    the Jacobian matrix of the vector of residuals
+% C                    evaluated at X. Space must be allocated for
+% C                    FJ whenever CD > 0.
+% C G(N)   (DOUBLE)  : When MODE = ABCD with D > 0, the vector G contains
+% C                    the product of the transpose of the matrix FJ
+% C                    and the vector F evaluted at X. That is, G is the
+% C                    gradient of half the sum of squares evaluated at X.
+% C NPROBS (INTEGER) : Number of different problems in the file. Set when
+% C                    MODE = -1 and passed through COMMON /PROBLM/.
+% C NSTRTS (INTEGER) : Number of different starting values. Set when
+% C                    MODE = -1 and passed through COMMON /PROBLM/.
+
+
+
+
+
+{\small\center
+
+\begin{table}[h!]
+\caption{Liste des fonctions de la librairie MGH}
+\center
+\begin{tabular}{|r|r|r|l|}
+\hline
+ No & $n$ & $m$ & Nom \\
+\hline
+ 1. &   2 &   2 &  Rosenbrock\\
+ 2. &   2 &   2 &  Freudenstein and Roth\\
+ 3. &   2 &   2 &  Powell Badly Scaled\\
+ 4. &   2 &   3 &  Brown Badly Scaled\\
+ 5. &   2 &   3 &  Beale\\
+ 6. &   2 &  10 &  Jennrich and Sampson\\
+ 7. &   3 &   3 &  Helical Valley\\
+ 8. &   3 &  15 &  Bard\\
+ 9. &   3 &  15 &  Gaussian\\
+10. &   3 &  16 &  Meyer\\
+11. &   3 &  10 &  Gulf Research and Development\\
+12. &   3 &  10 &  Box 3-Dimensional\\
+13. &   4 &   4 &  Powell Singular\\
+14. &   4 &   6 &  Wood\\
+15. &   4 &  11 &  Kowalik and Osborne\\
+16. &   4 &  20 &  Brown and Dennis\\
+17. &   5 &  33 &  Osborne 1\\
+18. &   6 &  13 &  Biggs EXP6\\
+19. &   11&  65 &  Osborne 2\\
+20. & (20)&  31 &  Watson\\
+21. & (10)& (10)&  Extended Rosenbrock\\
+22. & (10)& (10)&  Extended Powell Singular\\
+23. & ( 4)& ( 5)&  Penalty I\\
+24. & ( 4)& ( 8)&  Penalty II\\
+25. & (10)& (12)&  Variably Dimensioned\\
+26. & (10)& (10)&  Trigonometric\\
+27. & (10)& (10)&  Brown Almost Linear\\
+28. & (10)& (10)&  Discrete Boundary Value\\
+29. & (10)& (10)& Discrete Integral Equation\\
+30. & (10)& (10)&  Broyden Tridiagonal\\
+31. & (10)& (10)&  Broyden Banded\\
+32. & (10)& (20)&  Linear --- Full Rank\\
+33. & (10)& (20)&  Linear --- Rank 1\\
+34. & (10)& (20)&  Linear --- Rank 1 with Zero Columns and Rows\\
+35. & (10)& (10)&  Chebyquad\\
+\hline
+\end{tabular}
+\label{tab:mgh}
+\end{table}
+
+
+}
+% Les algorithmes de convergence dépendent beaucoup du point initial choisi. 
+
+
+
+
+
+\subsection{Matrices creuses}
+Etant donné que nous voulons faire des tests de calcul sur des fonctions types, il est pertinent
+d'étudier le comportement des fonctions et notamment si la matrice hessienne est creuse.
+La figure \ref{fig:bound} indique par des points les éléments non nuls de la matrice hessienne
+pour la fonction discrète à valeurs finies.
+On n'exploite pas le fait que la matrice soit creuse mais les co\^uts de calculs seront probablement
+diminués quand même car les opérations seront faites sur des zéros.
+
+
+
+\begin{figure}
+\caption{Matrice hessienne de la fonction discète à valeurs finies (28)}
+\center
+\includegraphics[scale=0.7]{figures/bound.png}
+\label{fig:bound}
+\end{figure}
+
+Nous allons présenter trois exemples de fonction appartenant à la librairie; la fonction bien connue Rosenbrock, généralisée à dimension variable, 
+une fonction trigonométrique et une fonction utilisant les polyn\^omes de Chebychev.
+
+
+\subsection{Fonction trigonométrique}
+
+\begin{align*}
+% \begin{equation}
+n \text{ variable, } m=n \\
+f_i(x)=n-\sum_{j=1}^{n}cos(x_j)+i(1-cos(x_i))-sin(x_i) \\
+x_0= [1/n, \cdots , 1/n] \\
+min_x f(x) = 0
+% \end{equation}
+\end{align*}
+
+
+
+
+
+\subsection{Fonction Rosenbrock étendue}
+
+\begin{align*}
+n\text{ variable mais pair } m=2 \\
+f_{2i-1}(x)=10(x_{2i}-x^2_{i-1})\\
+f_{2i}(x)=1-x_{2i-1}\\
+x_0= (\xi_i) \text{ o\`u } \xi_{2i-1}= -1.2  \text{ et } \xi_{2i}=1 \\
+min_x f(x) = 0 \text{ en } [1,\cdots ,1]
+\end{align*}
+
+
+
+\subsection{Fonction Chebyquad}
+
+\begin{align*}
+n \text{ variable, } m=n \\
+f_i(x)=\frac{1}{n}\sum_{j=1}^{n}T_i(x_j)-\int_0^1 \! T_i(x)dx \\
+\text{O\`u }T_i\text{est le ième polyn\^ome de Chebychev réduit à l'intervale} [0,\ 1] \\
+\int_0^1 \! T_i(x)dx= 0 \text{ pour i paire}\\
+\int_0^1 \! T_i(x)dx= \frac{-1}{i^2-1} \text{ pour i impaire}\\
+x_0= (\xi_j) \text{ o\`u } \xi_j=j/(n+1)\\
+f=0 \text{ pour } m=n \text{,}\ 1\leq n\leq 7\ \text{ et }\ n=9\\
+f=3.51687... 10^{-3}\ \text{ pour }\ n=m=8 \\
+f=6.50395... 10^{-3}\ \text{ pour }\ n=m=10 \\
+\end{align*}
+
+Comme les polyn\^omes sont de plus en plus compliqués à calculer quand la dimension augmente, le co\^ut de $f$
+ne va pas être linéaire par rapport à $n$.
+
+
+
+
+
+
+
+\section{Les outils}
+Il existe plusieurs outils de différencitation automatique, d'après \cite{autodiff}, 
+tableau \ref{tab:outils}. Les outils qui atteignent un ordre supérieur à deux de dérivation 
+utilise généralement le mode direct. On observe que la plupart des langages traités sont
+C/C++, fortran et Matlab.
+
+
+
+
+\begin{table}[h]
+	\begin{center}
+{%\footnotesize
+\small
+\begin{tabular}{ | l | c | r | c | c | c | } \hline
+
+           &         & Transformation            & Mode   & Mode      & Ordre  \\
+  Logiciel & Langage & de code (t)               & direct &  inverse  &        \\
+           &         & surcharge (s)             &        &           &        \\
+
+\hline
+ ADC &  C/C++ &  s  & 1 & 0 & 2 \\
+ ADF  & Fortran77, 95 &  s  & 1 & 0 & 2 \\
+ ADG  & Fortran77 & s  & 0 & 1 & $>$2  \\
+ ADIC  & C/C++ & t  & 1 & 0 & 2 \\
+ ADIFOR  & Fortran77 & t  & 1 & 0 &  2\\
+ ADiMat  & MATLAB &  t & 1 & 0 & 2 \\
+ ADMAT / ADMIT  & MATLAB & s  & 1 & 1 & 2\\
+ ADOL-C  & C/C++ & s  & 1 & 1 & $>$2 \\
+ ADOL-F  & Fortran95 & s  & 1 & 1 & $>$2\\
+ APMonitor  & Interpreted & s  & 1 & 0 &  \\
+ AUTO\_DERIV  & Fortran77, 95 & s  & 1 & 0 & 2\\
+ COSY INFINITY  & Fortran77, 95,C/C++ & s  & 1 & 0 &$>$2 \\
+ CppAD  & C/C++ & s  & 1 & 1 & $>$2 \\
+ FAD  & Haskell & s  & 1 & 0 & $>$2  \\
+ FADBAD/TADIFF  & C/C++ & s  & 1 & 1 & $>$2 \\
+ FFADLib  & C/C++ & s  & 1 & 0 & 2 \\
+ GRESS  & Fortran77 & t  & 1 & 1 & 1  \\
+ HSL\_AD02  & Fortran95 & s  & 1 & 1 & $>$2 \\
+ INTLAB  & MATLAB & s  & 1 & 0 & 2 \\
+ NAGWare Fortran 95   & Fortran77, 95 & t  & 1 & 0 & $>$2 \\
+ OpenAD  & C/C++,Fortran77, 95 &  t  & 1 & 1 & 2  \\
+ PCOMP  & Fortran77 & t  & 1 & 1 & 2 \\
+ pyadolc  & python & s  & 1 & 1 & 2 \\
+ pycppad  & Interpreted,python & s  & 1 & 1 & $>$2\\
+ Rapsodia  & C/C++,Fortran95 & s  & 1 & 0 &  $>$2\\
+ Sacado  & C/C++ & s  & 1 & 1 & 1 \\
+ TAF  & Fortran77, 95 & t  & 1 & 1 & 2 \\
+ TAMC  & Fortran77 & t  & 1 & 0 & 1 \\
+ TAPENADE  & C/C++,Fortran77, 95 & t  & 1 & 1 & $>$2 \\
+%  TaylUR  & Fortran95 &
+ TOMLAB /TomSym  & MATLAB & t/s & 1 & 1 & 2\\
+\hline
+
+
+\end{tabular}
+}
+	\end{center}
+	\caption{Plusieurs outils de DA}
+	\label{tab:outils}
+\end{table}
+
+
+
+
+
+% Etant donné que nous voulons adapter un outil sous scilab, il est plus facile de lier une librairie 
+% au langage fortran. Nous avons fait le choix de Tapenade car il traite du code fortran et permet de produire 
+% un code différentié qui pourra de nouveau être traité. Ainsi, n'importe quel ordre peut être atteint. \\
+
+
+
+\section{Un outil de DA: Tapenade}
+\label{sec:tapenade}
+
+    \subsection{Historique}
+
+Tapenade est un outil de différentiation automatique qui a commencé à être développé en 1999
+par une équipe du projet Tropics à l'INRIA. Acronyme pour Transformations et Outils Informatiques Pour le Calcul
+Scientifique. Il utilise la transformation de code. L'avantage, c'est que l'on va pouvoir différencier plusieurs fois
+puisque le code différencié est vu comme une fonction normale.
+
+Exemple d'utilisation : \cite{diffautoopa} OPA un modèle de circulation océanique.
+
+
+
+    %\subsection{La librairie MGH}
+    \subsection{Utilisation de Tapenade}
+
+
+L'outil peut s'utiliser soit en local, soit en ligne gr\^ace à un serveur. Son utilisation s'effectue en cinq étapes.
+D'abord, il faut fournir le code en fortran qui contient le code à différentier.
+La routine que l'on souhaite différentier, les variables d'entrées et de sortie et de
+ choisir le mode : tangent, inverse ou multi directionnel.
+A l'aide d'un Makefile, j'ai généré l'ensemble des dérivées dont j'avais besoin,
+ voir \ref{annexe:B} pour savoir comment générer les fichiers nécessaires. Pour chaque fonction, 
+plusieurs fichiers sont générés : un pour chaque opération que l'on souhaite. Pour atteindre les dérivées
+d'ordre supérieur, les fichiers générés sont redonné à l'outil pour être de nouveau différentiés.
+
+
+
+    \subsection{Avantages et inconvénients de Tapenade}
+
+La transformation du code est la meilleure approche pour la DA; elle donne la capacité de calculer les gradients
+à un faible co\^ut puisqu'elle exécute de manière impérative comme le programme original. De plus, il n'y a pas 
+de restrictions sur le style ou la taille de l'application à différentier. Au lieu de coder à la main une fonction
+possédant plusieurs millions de ligne (ce qui est source d'erreurs et demande un effort considérable) et il plus pratique 
+de le faire automatiquement. C'est un outil qui progresse encore; les performances du calcul de l'adjoint sont en cours 
+d'amélioration.
+Cependant, il ne traite que du code FORTRAN et C, même si théroriquement, tous les langages peuvent être traités. Le
+schéma optimal de checkpoints imbriqués pour un programme quelconque reste un problème de recherche. Enfin, les 
+bo\^ites noires ne peuvent évidemment pas être gérées ce qui n'est pas le cas pour la différentiation par différences
+finies.
+
+
+    \subsection{Difficultés pour les dérivées supérieures}
+
+\cite{Griewank2008EDP}
+
+Bien qu'efficace, le mode inverse comporte des complications lorsque l'on veut différentier à un ordre supérieur.
+Contrairement au mode tangent qui ne fait que rajouter des opérations élémentaires dans le code, le mode inverse
+va faire appara\^itre des appels à des routines : {\tt PUSH} et {\tt POP}. Celles-ci sont codées en c et appartienent 
+à une libraire extérieure mais ne sont pas fournies à l'outil de différentiation. Leur propre code adjoint a été codé manuellement
+mais seulement à l'ordre un. Pour obtenir des dérivées d'ordre supérieur, il a fallu coder leurs dérivées.
+Voir \ref{annexe:C}.
+
+
+
+
+
+  \subsection{Cholesky modifiée}
+
+%---------------------------------------------A retravailler !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+\label{chap3:cholesky}
+
+Pour commencer, il est à noter que la résolution 
+des systèmes triangulaires dans scilab n'est généralement pas efficace. Il s'avère que la détection du système triangulaire 
+n'est pas faite dans tous les cas. La figure \ref{fig:lu} révèle que sur les quatres tests de résolution
+ $Lx=e$, $L'x=e$, $U'x=e$, $Ux=e$ o\`u $e=(1)_{1\leq i\leq n}$ un vecteur colonne, une seule est performante.
+
+\begin{figure}
+\caption{Résolution d'un système triangulaire par scilab avec une décomposition LU}
+\center
+\includegraphics[scale=0.4]{figures/LU.png}
+\label{fig:lu}
+\end{figure}
+
+
+\begin{figure}
+\caption{Résolution d'un système triangulaire par scilab avec une décomposition de choloesky}
+\center
+\includegraphics[scale=0.4]{figures/chol.png}
+\label{fig:chol}
+\end{figure}
+
+
+
+
+
+D'autre part, il existe plusieurs versions de la décomposition de Cholesky modifié en scilab mais il n'existe pas 
+de version efficace. Cela est lié intrinséquement à scilab qui est un langage de haut niveau et n'est pas performant pour effectuer du code
+impératif sur des grandes dimensions comparativement au C ou Fortran.
+Par conséquent, nous avons choisi deux routines appartenant à Lapack, une libraire sur les systèmes linéaire écrite en fortran.
+ La première permet la décomposition 
+de Cholesky modifiée et la deuxième la résolution du système avec cette décomposition, nommée {\tt dsytrf} et {\tt dsytrs} respectivement. 
+Cette décomposition de Cholesky modifiée utilise la méthode de pivotement sur la diagonal de Bunch-Kaufman (BBK). \cite{Bunch}.
+
+Soit une matrice $A \in \mathbb{R}^{n\times n}$ non nulle, la factorisation fournit $P(A+E)P^T=L(D+F)L^T$. $F$ est choisie pour que $D+F$ et ainsi
+$A+E$ soient définies positives. Cette technique a été proposée par Moré et Sorensen \cite{More}. L'idée consiste à 
+trouver une permutation $\Pi$ et un entier $s=1$ ou $2$ tel que 
+
+\begin{equation*}
+\Pi A \Pi^T = 
+\left[
+\begin{array}{cc}
+ E & C^T \\
+ C & B \\
+\end{array}\right]
+\end{equation*}
+avec $E\in \mathbb{R}^{s\times s}$ non singulière et $B\in \mathbb{R}^{n-s\times n-s}$. En choisissant correctement $\Pi$, nous avons la factorisation :
+
+\begin{equation*}
+\Pi A \Pi^T = 
+\left[
+\begin{array}{cc}
+ I_s & 0 \\
+ CE^{-1} & I_{n-s} \\
+\end{array}\right]
+\left[
+\begin{array}{cc}
+ E & 0 \\
+ 0 & B-CE^{-1}C^T \\
+\end{array}\right]
+\left[
+\begin{array}{cc}
+ I_s & E^{-1}C^T \\
+ 0 & I_{n-s} \\
+\end{array}\right]
+\end{equation*}
+Le procédé est répété récursivement sur la matrice $S=B-CE^{-1}C^T$ de taille $(n-s)\times (n-s)$. On remarque ainsi qu'au lieu
+d'utiliser un pivot de taille $1\times 1$, on peut utiliser une matrice $2\times2$.
+
+
+ Selon Cheng et Higham \cite{Higham}, l'algorithme de BBK, meilleure que celle de Schnabel et Heskow \cite{choleskymod}, a un co\^ut identique à la décomposition de Cholesky standard relativement
+aux termes d'ordre les plus élevés, cependant $\lVert L \rVert_{\infty}$ n'est pas bornée et les valeurs propres de $D$ peuvent 
+largement différer de $A$. Il se peut que $A+E$ soit mal conditionnée, cependant nous considérerons que c'est ok.
+
+Afin d'obtenir une matrice définie positive, nous profitons de cette décomposition pour changer les éléments diagonaux.
+L'avantage, c'est que l'on a plus besoin de faire ces changement sur une matrice $n$ par $n$ mais seulement $2\times2$ ou $1\times1$.
+
+\begin{algorithm}                     % enter the algorithm environment
+\caption{Changement de la diagonale}          % give the algorithm a caption
+\label{alg:diag}                           % and a label for \ref{} commands later in the document
+\begin{algorithmic}
+\STATE \textbf{Préalables:} %Variables en entrée :  
+\begin{itemize}
+\item[$\bullet$] $\epsilon>0$
+\item[$\bullet$] $\Tilde{D}$ la matrice diagonale par bloc
+\end{itemize}
+\STATE \textbf{Sortie} %Variables en entrée :  
+\begin{itemize}
+\item[$\bullet$] $D$ la matrice diagonale par bloc avec pour valeur 
+propre minimale $\lambda_min \geq \epsilon$
+\end{itemize}
+
+\STATE Pour chaque bloc de la diagonale $\Tilde{D_k}$,
+\IF{$\Tilde{D_k}$ est de dimension $1\times1$}
+\STATE $D_k\leftarrow \max(\Tilde{D_k},\epsilon)$
+\ELSE 
+%\COMMENT{$D$ est de dimension $2\times2$} 
+\STATE $[Z,W]=spec(\Tilde{D_k)}$
+\COMMENT{Il s'agit de la diagonalisation de $\Tilde{D_k}$ : $ZWZ^T=\Tilde{D_k}$ avec $W$ matrice diagonale}
+\STATE $D_k\leftarrow Z*diag(max(diag(W),eps))*Z^T$
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+
+% function D=moddiag(D,Ipiv)
+% [nr,n]=size(D);
+% eps=0.00001
+% 
+% first(1)=%t
+% for j=1:n-1
+% 	    if(Ipiv(j)<0 & first(j)) then first(j+1)=%f, D(j,j+1)= D(j+1,j)
+% 	    else first(j+1)=%t
+% 	    end
+% end
+% for i=1:n
+%       if(first(i)) then
+% 	  if(Ipiv(i)<0) then
+% 	      [Z,W]=spec(D(i:i+1,i:i+1));
+% 	      D(i:i+1,i:i+1)=Z*diag(max(diag(W),eps))*Z'
+% 	      else D(i,i)=max(D(i,i),eps)
+% 	  end
+%       end
+% end
+% endfunction
+% eps=0.00001
+% A=rand(2,2)
+% A=A+A'
+% [Z,W]=spec(A)
+% A2=Z*diag(max(diag(W),eps))*Z'
+
+
+
+
+
+
+
+    \subsection{Décomposition de Cholesky et résolution}
+
+La résolution des systèmes $Ax=b$ s'effectue en trois temps. Tout d'abord, $A$ qui est par exemple 
+la hessienne de notre fonction, est décomposée en
+
+ $L\Tilde{D}L^T=P^T(A+E)P$ o\`u $D$ est une matrice diagonale par bloc soit de taille $1\times 1$, soit $2\times 2$.
+ La factorisation a un co\^ut de $\frac{1}{3}n^3$. Ensuite, on modifie chacun de ces blocs
+pour le rendre défini positif : $D\leftarrow \Tilde{D}+\Delta \Tilde{D}$. Cette opération est 
+de l'ordre de $n$ mais elle est effectuée avec scilab
+ Enfin, on résout le système $LDL^Tx=b$ qui est une opération en $n^2$
+Comme le montre la figure \ref{fig:temps8}, la résolution du système linéaire est plus rapide que le changement de la 
+diagonale parce qu'elle est faite en fortran.
+
+
+
+\begin{figure}
+\caption{Résolution de Ax=b}
+\center
+\includegraphics[scale=0.4]{figures/temps8.png}
+\label{fig:temps8}
+\end{figure}
+
+
+
+
+
+
+
+
+
+\begin{table}[h]
+	\begin{center}
+\begin{tabular}{|c|c|c|c|c|}\hline
+n & Décomposition & Arrangement & Résolution & $A \backslash b$ avec Scilab\\
+ & $A\leftarrow LDL^T$ & $D\leftarrow \Tilde{D}+\Delta \Tilde{D}$& $Lu=b$, $\Tilde{D}v=u$, $L^Tx=v$ & \\
+\hline
+$500 $&$  0.037000 $&$  0.011000 $&$ 0.002000 $&$ 0.090000$\\\hline
+$750 $&$ 0.122000 $&$ 0.026000 $&$ 0.005000 $&$ 0.220000$\\\hline
+$1000 $&$ 0.254000 $&$ 0.038000 $&$ 0.010000 $&$ 0.486000$\\\hline
+$1250 $&$ 0.475000 $&$ 0.055000 $&$ 0.015000 $&$ 0.944000$\\\hline
+$1500 $&$ 0.809000 $&$ 0.075000 $&$ 0.022000 $&$ 1.607000$\\\hline
+$1750 $&$ 1.278000 $&$ 0.097000 $&$ 0.030000 $&$ 2.543000$\\\hline
+$2000 $&$ 1.863000 $&$ 0.123000 $&$ 0.038000 $&$ 3.732000$\\\hline
+$2250 $&$ 2.636000 $&$ 0.149000 $&$ 0.047000 $&$ 5.413000$\\\hline
+$2500 $&$ 3.602000 $&$ 0.179000 $&$ 0.057000 $&$ 7.402000$\\\hline
+$2750 $&$ 4.830000 $&$ 0.215000 $&$ 0.070000 $&$ 10.116000$\\\hline
+$3000 $&$ 6.320000 $&$ 0.251000 $&$ 0.084000 $&$ 13.327000$\\\hline
+\end{tabular}
+	\end{center}
+	\caption{Temps de calcul pour chaque étape de la résolution du système $Ax=b$, bien que la modification de la diagonale soit
+$\mathbb{O}(n)$, elle est moins efficace que la résolution car elle est codée en scilab.}
+	\label{tab:newton}
+\end{table}
+
+
+%  Pour une décomposition efficace, j'ai utilisé une routine de lapack \cite{lapack}; dsytrf. \\
+% Ainsi, pour une matrice symétrique, la décomposition utilise la méthode de Bunch-Kaufman 
+% en pivotant la diagonale\cite{choleskymod}.
+
+
+
+
+
+
+
+
+
+\section{Introduction}
+Sur l'ensemble des 35 problèmes, après avoir modifié à la main les codes générés, seuls deux problèmes ne me donnent
+pas une valeur de Hessien correct. (Hessien non symétrique) Nous allons voir dans cette section le temps d'exécution 
+des programmes et allons vérifier que les bornes théoriques de complexité sont respectées. 
+
+
+
+
+\section{Temps de calcul des opérations critiques}
+
+
+    \subsection{Dérivées d'ordre divers}
+
+
+
+Pour effectuer mes tests, j'ai utilisé les fonctions trigonométrique et chebyquad. Ces deux fonctions ont des dimensions variables et 
+leurs hessiennes sont des matrices pleines; elle reflètent l'ensemble des résultats qui sont équivalents pour les calculs des dérivées.
+La fonction Chebyquad est plus particulière dans le sens o\`u le temps d'exécution de la fonction n'est pas porportionnel
+à la dimension car les polyn\^omes sont de plus en plus complexes à calculer en fonction de $n$. 
+
+
+
+
+
+\paragraph{Gradient recodé vs gradient fourni par la routine}
+ Pour la fonction trigonométrique, comme le montre \ref{fig:temps14},
+ le calcul du gradient donné par la routine de netlib n'est pas 
+efficace. Ceci s'explique par le fait que pour l'obtenir, on utilise la relation $$ \nabla f(x)=F(x)^T\nabla F(x)$$ en notant que 
+$$f(x)= \frac{1}{2}\sum_{i=1}^{m}F_i(x)^2$$
+Le calcul de la Jacobienne $\nabla F(x)$ de taille $n$ par $m$ impose beaucoup de calculs qui peuvent être évités.
+En recodant le gradient de la fonction, les multiplications sur les lignes sont factorisables, on améliore nettement 
+l'exécution.
+
+\begin{figure}
+\caption{Temps d'évaluation du gradient en modifiant la taille
+de $x$ et celui du gradient recodé}
+\center
+\includegraphics[scale=0.4]{figures/temps14.png}
+\label{fig:temps14}
+\end{figure}
+
+
+% \begin{figure}
+% \caption{Gradient de la fonction trigonométrique dont le code à été amélioré comparativement à celui d'origine}
+% \center
+% \includegraphics[scale=0.4]{figures/temps14.png}
+% \label{fig:temps14}
+% \end{figure}
+
+
+
+
+% Avec le code généré par tapenade :
+% Tableau pour calculer $f(x)$, $\nabla f(x)$,$\nabla^2 f(x)$, $\nabla f(x).v$, $\nabla^2 f(x).uv$
+
+
+
+
+
+
+\paragraph{Fonction et mode inverse}
+
+Afin de pouvoir comparer les temps d'exécution de la fonction et du mode inverse, les appels sont faits
+plusieurs fois dans une boucle de mille itérations. En effet, même pour une dimension de $n=10000$,
+ le temps est inférieur au pas de clock de $4*10^{-3}$s.
+unitaire. On remarque sur la figure \ref{fig:temps2} que l'obtention du gradient par le mode
+inverse est clairement proportionnel au co\^ut de la fonction avec un facteur de proportionnalité d'environ
+deux; pour rappel, la borne théorique est de quatre, ce qui 
+signifie que le mode inverse est nettement plus performant qu'une manière na\"ive.
+
+
+\begin{figure}
+\caption{Temps de calcul de la fonction et du gradient en mode direct par Tapenade dans une boucle de 1000 itérations, fonction trigonométrique}
+\center
+\includegraphics[scale=0.4]{figures/temps2.png}
+\label{fig:temps2}
+\end{figure}
+
+
+La figure \ref{fig:temps6} montre que l'évaluation de la fonction Chebyquad n'est pas proportionnel à la dimension; il ne s'agit pas d'une droite.
+En revanche, le gradient ressemble à un facteur près à celle de l'évaluation. On peut observer que $\#(\nabla f)\simeq 3.5 \#(f)$.
+
+
+\begin{figure}
+\caption{Fonction chebyquad Mode inverse vs temps fonction, l'évaluation n'est pas proportionnel à la dimension, par contre le gradient 
+ressemble à un facteur près à $f$}
+\center
+\includegraphics[scale=0.4]{figures/temps6.png}
+\label{fig:temps6}
+\end{figure}
+
+
+
+\paragraph{Le mode multi-directionnel}
+Le mode multi-directionnel correspond au mode direct appliqué à chacune des composantes;
+il équivaut à effectuer $\nabla f(x).(e_i)$ pour chaque $1\leq i\leq n$.
+
+
+
+Dans la figure \ref{fig:temps1}, nous pouvons voir que le temps en mode multi-directionnel
+ environ le même que pour calculer le gradient par différences finies. Le mode multi-directionnel
+n'est pas avantageux puisqu'il effectue le mode tangent $n$ fois.
+
+
+\begin{figure}
+\caption{Temps de calcul - fonction trigonométrique}
+\center
+\includegraphics[scale=0.4]{figures/temps1.png}
+\label{fig:temps1}
+\end{figure}
+
+
+
+\begin{figure}
+\caption{Mode multi directionnel}
+\center
+\includegraphics[scale=0.4]{figures/temps4.png}
+\label{fig:temps4}
+\end{figure}
+
+
+\paragraph{Hessien$\times$vecteur}
+
+Comme pour le mode inverse, le co\^ut du hessien multiplié par un certain vecteur calculé par mode direct sur mode inverse est proportionnel
+ au co\^ut de la foncion \ref{fig:temps3} environ 4$\times\#(f)$.
+
+
+\begin{figure}
+\caption{Mode tangent sur inverse (vert $\times$) sur une boucle de 1000 itérations, ce qui correspond au calcul de $\nabla^2 f(x).v$ pour un certain vecteur, le résultat
+est donc aussi un vecteur}
+\center
+\includegraphics[scale=0.4]{figures/temps3.png}
+\label{fig:temps3}
+\end{figure}
+
+
+
+
+
+
+\paragraph{Hessien}
+
+Pour obtenir la matrice hessienne \ref{fig:temps16}, il faut appliquer le mode multi-directionnel qui n'est pas 
+extrêment performant sur le mode inverse. 
+
+
+\begin{figure}
+\caption{Mode multi-directionnel sur inverse (vert $\times$) ce qui donne la hessienne $\nabla^2 f(x)$ pour un certain vecteur, le résultat
+est donc aussi un vecteur}
+\center
+\includegraphics[scale=0.4]{figures/temps16.png}
+\label{fig:temps16}
+\end{figure}
+
+
+
+
+\section{Méthode de descente}
+
+
+% \subsection{Variantes de direction}
+
+
+\subsection{Avec recherche linéaire}
+
+Pour les méthodes de Newton et Chebychev, j'ai d'abord conservé le point initial donné dans les fonctions
+de la librairie. Ce point est généralement assez proche de la solution. Dans le tableau, 
+nous notons $x_{N_f}$ et $x_{C_f}$ les points finales des méthodes de Newton et Chebychev respectivement. 
+Cette norme confirme ou infirme le fait que les deux algorithmes convergent bien vers le même point.
+
+On remarque sur le tableau \ref{tab:1} que la méthode de Chebychev comme celle d'extrapolation d'ordre 3,
+ n'aboutit pas dans plusieurs cas, le maximum d'itération étant fixé à $999$. Afin d'améliorer ceci,
+nous allons choisir la direction de Chebychev uniquement lorsqu'il s'agit bien d'une direction de descente.
+ Dans le cas contraire nous reprendrons la direction de Newton.
+
+
+\begin{table}[h]
+	\begin{center}
+
+{\small
+\begin{tabular}{|l|c|c|c|c|c|c|}
+  \hline fonction & n & Iter Newton & Iter Cheb & temps Newton & temps Cheby & $\lVert x_{N_f}-x_{C_f}\rVert $\\
+ \hline
+   rose& $2$ & $22$ & $16$ & $0.020000$ & $0.016000$ & $0.000000$ \\\hline
+   froth& $2$ & $8$ & $6$ & $0.006000$ & $0.005000$ & $0.000000$ \\\hline
+   badscp& $2$ & $999$ & $999$ & $0.871000$ & $6.730000$ & $8.069786$ \\\hline
+   badscb& $2$ & $9$ & $999$ & $0.009000$ & $6.057000$ & $999792.981615$ \\\hline
+   beale& $2$ & $10$ & $999$ & $0.010000$ & $0.889000$ & $1043.480583$ \\\hline
+   jensam& $2$ & $11$ & $8$ & $0.010000$ & $0.007000$ & $0.000000$ \\\hline
+   helix& $3$ & $13$ & $14$ & $0.014000$ & $0.021000$ & $0.000000$ \\\hline
+   bard& $3$ & $13$ & $2$ & $0.013000$ & $0.003000$ & $Nan$ \\\hline
+   gauss& $3$ & $3$ & $3$ & $0.003000$ & $0.003000$ & $0.000000$ \\\hline
+   meyer& $3$ & $163^*$ & $13^*$ & $0.180000$ & $0.041000$ & $1.49\times 10^{10}$ \\\hline
+   gulf& $3$ & $2$ & $2$ & $0.003000$ & $0.027000$ & $Nan$ \\\hline
+   box& $3$ & $20$ & $999$ & $0.020000$ & $4.672000$ & $46.799375$ \\\hline
+   sing& $4$ & $22$ & $15$ & $0.020000$ & $0.013000$ & $0.000032$ \\\hline
+   wood& $4$ & $40$ & $29$ & $0.038000$ & $0.027000$ & $0.000000$ \\\hline
+   kowosb& $4$ & $9$ & $2$ & $0.009000$ & $0.003000$ & $Nan$ \\\hline
+   bd& $4$ & $9$ & $10$ & $0.008000$ & $0.009000$ & $0.000000$ \\\hline
+   rosex& $10$ & $22$ & $999$ & $0.021000$ & $4.290000$ & $2.837129$ \\\hline
+   singx& $12$ & $22$ & $17$ & $0.022000$ & $0.016000$ & $0.000134$ \\\hline
+   pen1& $4$ & $34$ & $999$ & $0.031000$ & $3.441000$ & $0.176609$ \\\hline
+   vardim& $10$ & $15$ & $11$ & $0.015000$ & $0.011000$ & $0.000000$ \\\hline
+   trig& $10$ & $10$ & $999$ & $0.012000$ & $1.080000$ & $2.883\times 10^{48}$ \\\hline
+   almost& $10$ & $9$ & $9$ & $0.008000$ & $0.010000$ & $0.214754$ \\\hline
+   bv& $10$ & $4$ & $3$ & $0.004000$ & $0.003000$ & $0.000000$ \\\hline
+   ie& $10$ & $4$ & $3$ & $0.004000$ & $0.003000$ & $0.000000$ \\\hline
+   band& $10$ & $9$ & $8$ & $0.009000$ & $0.008000$ & $0.000000$ \\\hline
+   cheb& $10$ & $18$ & $999$ & $0.025000$ & $5.302000$ & $0.235547$ \\\hline
+   \end{tabular}
+}
+	\end{center}
+	\label{tab:1}
+	\caption{Tests des méthodes de Newton et Chebychev sur l'ensemble de la librairie MGH avec $x_0$
+relativement proche de la solution. $Nb^*$ signifie que le critère d'Armijo plante.}
+	\label{tab:newton}
+\end{table}
+
+
+
+
+
+
+
+
+\begin{table}[h]
+	\begin{center}
+{%\small
+ \footnotesize
+% \begin{tabular}{|l|c|c|c|c|c|c|}
+%   \hline fonction & n & Iter Newton & Iter Cheb & temps Newton & temps Cheby &$\lVert x_{N_f}-x_{C_f}\rVert $\\
+%  \hline
+%    rose& $2$ & $22$ & $16$ & $0.020000$ & $0.017000$ & $0.000000$ \\\hline
+%    froth& $2$ & $8$ & $6$ & $0.007000$ & $0.005000$ & $0.000000$ \\\hline
+%    badscp& $2$ & $999$ & $545$ & $0.878000$ & $0.475000$ & $0.082534$ \\\hline
+%    badscb& $2$ & $9$ & $21$ & $0.009000$ & $0.037000$ & $0.000000$ \\\hline
+%    beale& $2$ & $10$ & $9$ & $0.011000$ & $0.011000$ & $0.000000$ \\\hline
+%    jensam& $2$ & $11$ & $8$ & $0.010000$ & $0.007000$ & $0.000000$ \\\hline
+%    helix& $3$ & $13$ & $14$ & $0.014000$ & $0.022000$ & $0.000000$ \\\hline
+%    bard& $3$ & $13$ & $13$ & $0.013000$ & $0.014000$ & $0.000000$ \\\hline
+%    gauss& $3$ & $3$ & $3$ & $0.003000$ & $0.003000$ & $0.000000$ \\\hline
+%    meyer& $3$ & $163^*$ & $133^*$ & $0.181000$ & $0.177000$ & $0.000000$ \\\hline
+%    gulf& $3$ & $2$ & $2$ & $0.003000$ & $0.004000$ & $Nan$ \\\hline
+%    box& $3$ & $20$ & $135$ & $0.020000$ & $0.132000$ & $66.947050$ \\\hline
+%    sing& $4$ & $22$ & $15$ & $0.020000$ & $0.013000$ & $0.000032$ \\\hline
+%    wood& $4$ & $40$ & $29$ & $0.038000$ & $0.027000$ & $0.000000$ \\\hline
+%    kowosb& $4$ & $9$ & $9$ & $0.009000$ & $0.009000$ & $0.000000$ \\\hline
+%    bd& $4$ & $9$ & $10$ & $0.009000$ & $0.009000$ & $0.000000$ \\\hline
+%    rosex& $10$ & $22$ & $20$ & $0.022000$ & $0.025000$ & $0.000000$ \\\hline
+%    singx& $12$ & $22$ & $17$ & $0.022000$ & $0.017000$ & $0.000134$ \\\hline
+%    pen1& $4$ & $34$ & $25$ & $0.031000$ & $0.023000$ & $0.000000$ \\\hline
+%    vardim& $10$ & $15$ & $11$ & $0.014000$ & $0.010000$ & $0.000000$ \\\hline
+%    trig& $10$ & $10$ & $9$ & $0.012000$ & $0.012000$ & $0.000000$ \\\hline
+%    almost& $10$ & $9$ & $9$ & $0.008000$ & $0.009000$ & $0.214754$ \\\hline
+%    bv& $10$ & $4$ & $3$ & $0.004000$ & $0.003000$ & $0.000000$ \\\hline
+%    ie& $10$ & $4$ & $3$ & $0.004000$ & $0.003000$ & $0.000000$ \\\hline
+%    band& $10$ & $9$ & $8$ & $0.009000$ & $0.008000$ & $0.000000$ \\\hline
+%    cheb& $10$ & $18$ & $20$ & $0.026000$ & $0.031000$ & $0.103538$ \\\hline
+%    \end{tabular}
+
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|}
+  \hline fonction & n & IN & IC & I3 & T N & T C& T E3 &  $\lVert x_{N_f}-x_{C_f}\rVert $ & $\lVert x_{N_f}-x_{3_f}\rVert $ \\
+ \hline
+   rose& $2$ & $22$ & $16$ & $15$ & $0.020$& $0.016$ & $0.019$  & $0.000000$ & $0.000000$ \\\hline
+   froth& $2$ & $8$ & $6$ & $5$ & $0.006$& $0.005$ & $0.005$  & $0.000000$ & $0.000000$ \\\hline
+   badscp& $2$ & $999$ & $545$ & $288$ & $0.874$& $0.477$ & $0.312$ & $0.082534$ & $0.235713$ \\\hline
+   badscb& $2$ & $9$ & $21$ & $18$ & $0.009$& $0.036$ & $0.075$ & $0.000000$ & $0.000000$ \\\hline
+   beale& $2$ & $10$ & $9$ & $8$ & $0.010$& $0.011$ & $0.020$ & $0.000000$ & $0.000000$ \\\hline
+   jensam& $2$ & $11$ & $8$ & $7$ & $0.009$& $0.007$ & $0.008$ & $0.000000$ & $0.000000$ \\\hline
+   helix& $3$ & $13$ & $14$ & $11$ & $0.013$& $0.022$ & $0.017$ & $0.000000$ & $0.000000$ \\\hline
+   bard& $3$ & $13$ & $13$ & $13$ & $0.013$& $0.014$ & $0.017$ & $0.000000$ & $0.000000$ \\\hline
+   gauss& $3$ & $3$ & $3$ & $3$ & $0.002$& $0.002$ & $0.003$ & $0.000000$ & $0.000000$ \\\hline
+   meyer& $3$ & $163^*$ & $133^*$ & $146^*$ & $0.196$& $0.184$ & $0.376$ & $0.000000$ & $0.000000$ \\\hline
+   gulf& $3$ & $2$ & $2$ & $2$ & $0.003$& $0.003$ & $0.010$ & $Nan$ & $Nan$ \\\hline
+   box& $3$ & $20$ & $135$ & $11$ & $0.020$& $0.131$ & $0.017$ & $66.947050$ & $0.000000$ \\\hline
+   sing& $4$ & $22$ & $15$ & $13$ & $0.020$& $0.014$ & $0.014$ & $0.000032$ & $0.000068$ \\\hline
+   wood& $4$ & $40$ & $29$ & $25$ & $0.038$& $0.027$ & $0.030$ & $0.000000$ & $0.000000$ \\\hline
+   kowosb& $4$ & $9$ & $9$ & $9$ & $0.010$& $0.009$ & $0.012$ & $0.000000$ & $0.000000$ \\\hline
+   bd& $4$ & $9$ & $10$ & $11$ & $0.008$& $0.009$ & $0.013$ & $0.000000$ & $0.000000$ \\\hline
+   rosex& $10$ & $22$ & $20$ & $13$ & $0.021$& $0.024$ & $0.023$ & $0.000000$ & $0.000000$ \\\hline
+   singx& $12$ & $22$ & $17$ & $16$ & $0.022$& $0.017$ & $0.020$ & $0.000134$ & $0.000155$ \\\hline
+   pen1& $4$ & $34$ & $25$ & $19$ & $0.031$& $0.023$ & $0.021$ & $0.000000$ & $0.000000$ \\\hline
+   vardim& $10$ & $15$ & $11$ & $10$ & $0.015$& $0.011$ & $0.012$ & $0.000000$ & $0.000000$ \\\hline
+   trig& $10$ & $10$ & $9$ & $9$ & $0.012$& $0.011$ & $0.017$ & $0.000000$ & $0.000000$ \\\hline
+   almost& $10$ & $9$ & $9$ & $12$ & $0.008$& $0.009$ & $0.020$ & $0.214754$ & $0.000000$ \\\hline
+   bv& $10$ & $4$ & $3$ & $3$ & $0.004$& $0.003$ & $0.004$ & $0.000000$ & $0.000000$ \\\hline
+   ie& $10$ & $4$ & $3$ & $3$ & $0.004$& $0.003$ & $0.003$ & $0.000000$ & $0.000000$ \\\hline
+   band& $10$ & $9$ & $8$ & $7$ & $0.009$& $0.008$ & $0.010$ & $0.000000$ & $0.000000$ \\\hline
+   cheb& $10$ & $18$ & $20$ & $13$ & $0.025$& $0.031$ & $0.039$ & $0.103538$ & $0.323658$ \\\hline
+
+
+   \end{tabular}
+}
+	\end{center}
+	\caption{Tests des méthodes de Newton et Pseudo-Chebychev sur l'ensemble de la librairie MGH avec $x_0$
+ralativement proche de la solution : pour Chebychev et l'extrapolation d'ordre 3 la direction n'est gardée que s'il s'agit d'une 
+direction descendante sinon on reprend celle de Newton.}
+	\label{tab:newton}
+\end{table}
+
+
+Ensuite j'ai effectué les mêmes tests mais avec des dimensions plus grandes. Comme point de départ,
+j'ai choisi un random à valeurs comprises entre $0$ et $100$. Sachant que les algorithmes ne sont pas 
+globalement convergents, le tableau \ref{tab:111} montre ce fait et en général, ils ne convergent pas.
+
+
+
+\begin{table}[h]
+	\begin{center}
+{\small
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Si la méthode de Chebychev n'est pas une direction de Descente 
+%on la garde quand meme!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+\begin{tabular}{|l|c|c|c|c|c|c|}
+  \hline fonction & $n$ & Iter Newton & Iter Cheb & temps Newton & temps Cheby & Norme diff \\
+ \hline
+   rose& 2 & 77 & 5 & 0.075000 & 0.004000 & 0.000000 \\\hline
+   froth& 2 & 17 & 12 & 0.015000 & 0.011000 & 0.000000 \\\hline
+   badscp& 2 & $19^*$ & 999 & 0.104000 & 5.140000 & 73081.313391 \\\hline
+   badscb& 2 & 18 & 999 & 0.024000 & 5.814000 & 999915.027828 \\\hline
+   beale& 2 & $14^*$ & 999 & 0.074000 & 4.536000 & 28470.397921 \\\hline
+   jensam& 2 & 1 & 1 & 0.001000 & 0.002000 & Nan \\\hline
+   helix& 3 & 14 & 10 & 0.013000 & 0.014000 & 0.000000 \\\hline
+   bard& 3 & 9 & 2 & 0.009000 & 0.002000 & Nan \\\hline
+   gauss& 3 & 1 & 1 & 0.001000 & 0.001000 & 0.000000 \\\hline
+   meyer& 3 & $271^*$ & 999 & 0.302000 & 6.159000 & 6168.587560 \\\hline
+   gulf& 3 & 1 & 1 & 0.001000 & 0.001000 & 0.000000 \\\hline
+   box& 3 & 21 & 6 & 0.021000 & 0.016000 & Nan \\\hline
+   sing& 4 & 26 & 19 & 0.024000 & 0.017000 & 0.000136 \\\hline
+   wood& 4 & 27 & 21 & 0.025000 & 0.024000 & 0.000000 \\\hline
+   kowosb& 4 & 230 & 2 & 0.221000 & 0.003000 & Nan \\\hline
+   bd& 4 & 13 & 12 & 0.013000 & 0.011000 & 0.000000 \\\hline
+   rosex& 10 & 203 & 5 & 0.207000 & 0.005000 & 0.000000 \\\hline
+   singx& 12 & 30 & 24 & 0.030000 & 0.023000 & 0.000553 \\\hline
+   pen1& 4 & 42 & 30 & 0.038000 & 0.027000 & 0.000000 \\\hline
+   vardim& 10 & 26 & 19 & 0.025000 & 0.018000 & 0.000000 \\\hline
+   trig& 10 & 20 & 2 & 0.023000 & 0.027000 & Nan \\\hline
+   almost& 10 & 25 & 28 & 0.078000 & 0.297000 & Nan \\\hline
+   bv& 10 & 22 & 999 & 0.022000 & 5.438000 & 185.331743 \\\hline
+   ie& 10 & 21 & 17 & 0.025000 & 0.029000 & 0.000000 \\\hline
+   band& 10 & 31 & 25 & 0.033000 & 0.034000 & 0.000000 \\\hline
+   cheb& 10 & 167 & 999 & 0.208000 & 5.010000 & 1.674059 \\\hline
+   ie & 100 & 89 & 360 & 2.251000 & 11.208000 & 0.000000 \\\hline 
+   ie& 200 & 177 & 234 & 27.493000 & 39.950000 & 0.000000 \\\hline
+   trig& 100 & 46 & 45 & 0.340000 & 0.343000 & 0.069866 \\\hline 
+   trig& 250 & 61 & 58 & 2.104000 & 2.114000 & 14217.789748 \\\hline  
+   trig& 350 & 61 & 65 & 4.270000 & 4.700000 & 0.022663 \\\hline  
+   bv& 500 & 20 & 16 & 1.172 & 1.016 & 0.0066708 \\\hline
+   bv& 1000 & 19 & 15 & 5.404 & 4.585 &  0.1489379 \\\hline
+   bv& 1500 & 17 & 14 & 10.86 & 9.613 & 12.905217 \\\hline
+   bv& 2000 & 17 & 13 & 19.097 & 15.863 & 17.806732 \\\hline
+\end{tabular}
+}
+	\end{center}
+	\caption{Nombre d'itération des méthodes de Newton et Chebychev mais sur un point initial loin de la 
+solution.}
+	\label{tab:111}
+\end{table}
+
+
+
+
+
+
+
+
+
+
+
+
+\begin{table}[h]
+	\begin{center}
+{\small
+\begin{tabular}{|l|c|c|c|c|c|c|}
+  \hline fonction & $n$ & Iter Newton & Iter Cheb & temps Newton & temps Cheby & $\lVert x_{N_f}-x_{C_f}\rVert $ \\
+ \hline
+trig& $100 $&$ 6$ &$ 6 $&$ 0.072000 $&$ 0.056000 $&$ 0.000000$ \\\hline %en utilisant le x0
+ie& $300 $&$ 4 $&$ 3 $&$ 1.842000 $& $1.395000 $&$ 0.000000 $\\\hline % en utilisant le x0
+ie& $500 $&$ 4 $& $3 $& $8.047000$ &$ 6.110000 $&$ 0.000000$ \\\hline % en utilisant le x0
+ie& $800 $&$ 4 $& $3 $& $32.200000 $& $24.464000 $&$ 0.000000$ \\\hline % en utilisant le x0
+ie& $300 $&$ 7 $& $5 $& $3.204000$ & $2.324000$ & $0.000000$ \\\hline   % en utilisant le 10* x0
+ie& $500 $&$ 7 $& $5 $& $14.045000 $& $10.163000$ & $0.000000$ \\\hline % en utilisant le 10* x0
+ie& $800 $&$ 7 $&$ 5 $& $56.345000 $& $40.795000 $& $0.000000$ \\\hline % en utilisant le 10* x0
+band& $300$ &$ 9 $& $8$ &$ 0.352000 $& $0.345000 $& $0.000000 $\\\hline  % en utilisant le x0
+band& $500$ &$ 9 $& $8 $& $0.923000 $& $0.884000 $& $0.000000 $\\\hline  % en utilisant le x0
+band& $800$ &$ 9 $& $8 $& $2.566000 $& $2.450000 $& $0.000000 $\\\hline  % en utilisant le x0
+band& $300$ &$ 19$ & $15$ &$ 0.718000$ &$ 0.629000 $& $0.000000$ \\\hline
+\end{tabular}
+}
+	\end{center}
+	\caption{Point initial proche de la solution}
+	\label{tab:newton}
+\end{table}
+
+\begin{table}[h]
+	\begin{center}
+{\scriptsize
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|}
+  \hline fonction & $k*x_0$ & $n$ & I N & I C & I3 & 
+ temps Newton & temps Cheby & temps extra 3 & $\lVert x_{N_f}-x_{C_f}\rVert $ & $\lVert x_{N_f}-x_{3_f}\rVert $  \\
+ \hline
+bv & 1 & 300 & 2 & 2 & 2 & 0.043000 & 0.043000 & 0.074000 & 0.000042 & 0.000042 \\\hline 
+bv & 10 & 300 & 4 & 3 & 4 & 0.082000 & 0.065000 & 0.149000 & 0.000228 & 0.000308 \\\hline 
+bv & 100 & 300 & 13 & 10 & 11 & 0.266000 & 0.218000 & 0.413000 & 0.000029 & 0.000267 \\\hline 
+bv & 1 & 500 & 7 & 6 & 4 & 0.407000 & 0.375000 & 0.433000 & 0.000725 & 0.000473 \\\hline 
+bv & 10 & 500 & 13 & 13 & 15 & 0.747000 & 0.815000 & 1.626000 & 0.001876 & 0.002417 \\\hline 
+bv & 100 & 500 & 23 & 19 & 21 & 1.323000 & 1.193000 & 2.289000 & 0.001084 & 0.000554 \\\hline 
+bv & 1 & 800 & 6 & 5 & 3 & 1.062000 & 0.942000 & 0.920000 & 0.016409 & 0.141987 \\\hline 
+bv & 10 & 800 & 11 & 9 & 7 & 1.938000 & 1.717000 & 2.175000 & 0.706669 & 0.924390 \\\hline 
+bv & 100 & 800 & 21 & 20 & 17 & 3.720000 & 3.841000 & 5.325000 & 0.798127 & 0.800345 \\\hline
+
+\end{tabular}
+}
+	\end{center}
+	\caption{Point initial proche de la solution}
+	\label{tab:newton}
+\end{table}
+
+% \subsection{Avec région de confiance}
+\subsection{Figure qui illustre les parcours}
+
+
+\paragraph{Rosenbrock}
+
+Sur les figures \ref{fig:Newton} et \ref{fig:Chebychev}, j'ai tracé le chemin qu'emprunte 
+l'algorithme de Newton et de Chebychev pour la fonction de Rosenbrock
+
+
+\begin{figure}
+\caption{Newton - La recherche linéaire restreint à fournir des itérés dont la valeur de l'objectif est 
+toujours décroissante tandis que sans recherche, on s'éloigne pour converger plus vite.}
+
+\begin{center}
+\fbox{
+\begin{minipage}[c]{0.6\textwidth}
+\begin{center}
+\beginpgfgraphicnamed{figures/courbe_0}
+\endpgfgraphicnamed
+\end{center}
+\end{minipage}
+}
+\end{center}
+\label{fig:Newton}
+\end{figure}
+
+\vspace{1cm}
+
+
+\begin{table}[h]
+	\begin{center}
+	  \begin{tabular}{|l|c|c|c|}
+	  \hline
+	  itération & $x_1$ & $x_2$ &  $f(x)$ \\
+	  \hline
+	  $0$ & $-1.200000$ & $1.000000$ & $24.200000$ \\
+	  $1$ & $-1.175281$ & $1.380674$ & $4.731884$ \\
+	  $2$ & $0.763115$ & $-3.175034$ & $1411.845179$ \\
+	  $3$ & $0.763430$ & $0.582825$ & $0.055966$ \\
+	  $4$ & $0.999995$ & $0.944027$ & $0.313189$ \\
+	  $5$ & $0.999996$ & $0.999991$ & $0.000000$ \\
+	  $6$ & $1.000000$ & $1.000000$ & $0.000000$ \\
+	  \hline
+	  \end{tabular}\\
+	\end{center}
+	\caption{Itérés de la méthode de Newton sur la fonction Rosenbrock sans recherche linéaire.}
+	\label{tab:newton}
+\end{table}
+
+
+On observe bien que sans recherche linéaire, l'algorithme est plus rapide,
+cependant la valeur de l'objectif peut augmenter. A l'itération $2$, la valeur de l'objectif
+ atteint $1411.8$, et si l'algorithme revient vers la solution, c'est "par chance" car il n'y a pas de convergence global.
+ Lorsque l'on applique une recherche linéaire, le parcours est mieux contr\^olée et suit une "vallée" o\`u la valeur de la
+fonction objectif reste faible.
+
+
+\begin{figure}
+\caption{Chebychev - La direction de Chebychev est meilleure sur l'exemple, cependant qu'une seule itération n'est gagnée}
+\begin{center}
+\fbox{
+\begin{minipage}[c]{0.6\textwidth}
+\begin{center}
+\beginpgfgraphicnamed{figures/courbe_1}
+\endpgfgraphicnamed
+\end{center}
+\end{minipage}
+}
+\end{center}
+% \beginpgfgraphicnamed{figures/courbe_1}
+% \endpgfgraphicnamed
+
+\label{fig:Chebychev}
+\end{figure}
+
+
+\begin{table}[h]
+	\begin{center}
+	\begin{tabular}{|l|c|c|c|}
+	\hline
+	itération & $x_1$ & $x_2$ &  $f(x)$ \\
+	\hline
+	$0$ & $-1.200000$ & $1.000000$ & $24.200000$ \\
+	$1$ & $-1.150840$ & $1.322626$ & $4.626437$ \\
+	$2$ & $0.848588$ & $-0.780668$ & $225.254139$ \\
+	$3$ & $0.849592$ & $0.721806$ & $0.022623$ \\
+	$4$ & $1.000000$ & $0.999993$ & $0.000000$ \\
+	$5$ & $1.000000$ & $1.000000$ & $0.000000$ \\
+	\hline
+	\end{tabular}
+	\end{center}
+	\caption{Itérés de la méthode de Chebychev sur la fonction Rosenbrock}
+	\label{tab:chebychev}
+\end{table}
+
+
+
+
+
+
+
+
+\begin{figure}
+\caption{Ordre supérieur}
+\begin{center}
+\fbox{
+\begin{minipage}[c]{0.7\textwidth}
+\begin{center}
+\beginpgfgraphicnamed{figures/courbe_2}
+\endpgfgraphicnamed
+\end{center}
+\end{minipage}
+}
+% \beginpgfgraphicnamed{figures/courbe_2}
+% \endpgfgraphicnamed
+\end{center}
+\label{fig:sup}
+\end{figure}
+
+
+\begin{table}[h]
+	\begin{center}
+	\begin{tabular}{|l|c|c|c|}
+	\hline
+	itération & $x_1$ & $x_2$ &  $f(x)$ \\
+	\hline
+	$0$ & $-1.200000$ & $1.000000$ & $24.200000$ \\
+	$1$ & $-1.126673$ & $1.265834$ & $4.524003$ \\
+	$2$ & $0.847210$ & $-0.350714$ & $114.187943$ \\
+	$3$ & $0.849335$ & $0.721366$ & $0.022700$ \\
+	$4$ & $1.000000$ & $1.000000$ & $0.000000$ \\
+	$5$ & $1.000000$ & $1.000000$ & $0.000000$ \\
+	\hline
+	\end{tabular}\\
+	\end{center}
+	\caption{Itérés de la méthode d'extrapolation d'ordre 3 sur la fonction Rosenbrock}
+	\label{tab:extra3}
+\end{table}
+
+
+% \cite{historical}\cite{cauchy}
+
+
+

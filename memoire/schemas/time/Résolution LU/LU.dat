@@ -1,0 +1,27 @@
+
+# n décomposition LU, résolution ,r ,r ,r , décomposition de cholesky , r r r
+500    0.279    0.006    0.069    0.068    0.07     0.051    0.083    0.012  
+750    0.293    0.016    0.205    0.217    0.203    0.115    0.206    0.022  
+1000    0.601    0.031    0.472    0.481    0.496    0.254    0.473    0.041  
+1250    1.094    0.05     0.903    0.92     0.951    0.469    0.903    0.066  
+1500    1.808    0.071    1.533    1.562    1.564    0.8      1.531    0.098  
+1750   2.821    0.092    2.425    2.467    2.505    1.239    2.432    0.13   
+2000    4.109    0.129    3.885    3.983    3.696    1.819    3.821    0.201 
+
+
+#for i=[1:7],
+#   M=rand(n(i),n(i))+eye(n(i),n(i));
+#   e=rand(n(i),1);
+#   tic;[L,U,E]=lu(M);tlu(i)=toc();
+#   tic;L\e;tL(i)=toc();
+#   tic;U\e;tU(i)=toc();
+#   tic;L'\e;tLp(i)=toc();
+#   tic;U'\e;tUp(i)=toc();
+#
+#   M=M*M'+eye(n(i),n(i));
+#   tic;[R]=chol(M);tchol(i)=toc();
+#   tic;R\e;tR(i)=toc();
+#   tic;R'\e;tRp(i)=toc();
+#end
+#
+#[tlu,tL,tU,tLp,tUp,tchol,tR,tRp]

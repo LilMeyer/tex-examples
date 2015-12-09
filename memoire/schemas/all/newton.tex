@@ -1,0 +1,61 @@
+\documentclass{article}
+% Les différentes tailles :
+% \tiny
+% \scriptsize
+% \footnotesize
+% \small
+% \normalsize
+% \large
+% \Large
+% \LARGE
+% \huge
+% \Huge
+
+
+
+
+
+\usepackage{tikz}
+\usepackage{amsmath}
+\usetikzlibrary{automata,arrows,calc,er,fit,positioning,snakes,shapes,trees}
+
+
+\begin{document}
+
+
+
+
+\def\xmin{-1}
+\def\xmax{4}
+\def\xk1{1.2894652}
+
+
+\begin{tikzpicture}[samples=100,domain=\xmin:\xmax]
+\draw[very thin,color=gray] (-0.2,-0.5) grid (4.2,4);
+\draw[->] ({\xmin-0.1},0) -- ({\xmax+0.1},0) node[right] {$x$};
+\draw[->] (0,-1) -- (0,4) node[above] {$F(x)$};
+\draw[color=blue] plot (\x,{(-3*sin(\x r)+4*\x)/6}) node[right] {$F(x)$};
+\draw[-] (3.5,0) node[below] {$x_k$} -- (3.5,{(-3*sin(3.5 r)+4*(3.5))/6});
+\begin{scope}
+%\clip (-3.5,0) rectangle (0,5);
+\clip (0,0) rectangle (3.5,4);
+\draw[color=red] plot (\x,{(-3*sin(3.5 r)+4*(3.5) + (-3*cos(\x-3.5 r)+4)*(\x-3.5))/6});
+\end{scope}
+\node [below] at (\xk1,0)  {$x_{k+1}$}; 
+
+
+
+\draw[-] (\xk1,0) -- (\xk1,{(-3*sin(\xk1 r)+4*(\xk1))/6}) ;
+\begin{scope}
+\clip (\xk1,0) rectangle (0,5);
+\draw[color=red] plot (\x,{(-3*sin(\xk1 r)+4*(\xk1) + (-3*cos(\x-\xk1 r)+4)*(\x-\xk1))/6});
+\end{scope}
+
+\node [below] at (.5,0)  {$x_{k+2}$}; 
+\node  at (2,3.5)  {$x_{k+1}\leftarrow x_k-\frac{F(x)}{F'(x)}$}; 
+\end{tikzpicture}
+
+
+
+
+\end{document}

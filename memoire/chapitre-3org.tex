@@ -1,0 +1,478 @@
+
+
+
+
+Un langage tr\`es connu de mod\'elisation alg\'ebrique en optimisation est AMPL. D\'evelopp\'e par Fourer, Gay et 
+Kernighan, il a \'et\'e conçu pour r\'esoudre des probl\`emes complexes de grande dimension. MINOS, IPOPT, 
+SNOPT, KNITRO sont des exemples de solveurs externes. Une de ses particularit\'es est qu'il a une syntaxe tr\`es proche des
+expressions math\'ematiques en optimisation. 
+AMPL peut fournir $\nabla f$ et $\nabla^2 f$ mais pas les ordres sup\'erieurs. Il n'est donc pour l'instant pas possible de l'utiliser 
+pour les directions plus complexes.
+
+
+
+% Malheureusement, aucun outil de DA n'est capable de traiter cette syntaxe.
+
+D'autre part, la librairie CUTEr  {\it A Constrained and Unconstrained Testing Environment, revisited}
+fait partie des librairies les plus r\'eput\'ees pour tester des algorithmes d'optimisation.
+ Elle fournit une collection de probl\`emes et fonctionne sur un grand nombre de plate-formes. 
+Les probl\`emes tests sont \'ecrits en SIF  {\it Standard Input Format}.
+Malheureusement, même si ce code peut-être transform\'e en Fortran, il est difficilement exploitable par les outils
+de diff\'erentiation automatique qui ne g\`erent pas le code SIF.
+En revanche, il existe une librairie qui est un sous-ensemble de CUTEr, \'ecrite en fortan : celle de Mor\'e, Garbow et Hillstrom (MGH) \cite{355936} 
+et qui est exploitable par les outils de DA.
+ Dans le choix de l'outil de diff\'erentiation automatique, Tapenade nous est apparu comme le plus ad\'equat car il marche
+par transformation de code en mode inverse et direct. De plus, il traite et retourne un code en fortran que l'on peut de nouveau diff\'erentier.
+ Th\'eoriquement, il est possible d'obtenir n'importe quel ordre de d\'erivation mais nous verrons les limitations de cet outil. N\'eanmoins, 
+ cet outil a d\'ej\`a fait ses preuves dans certains milieux (au moins pour le gradient).
+
+Une fois que l'impl\'ementation des d\'eriv\'ees sera faite, le but est de v\'erifier la convergence des algorithmes
+ et de comparer les coûts de calculs des m\'ethodes.
+La libraire de MGH\footnote{disponible sur \url{http://www.netlib.org/uncon/data/}}, permettra de traiter un large \'eventail de cas possibles et \'evaluera la fiabilit\'e et la robustesse des algorithmes.
+
+
+
+
+\section{Les outils}
+Il existe plusieurs outils de diff\'erentiation automatique, d'apr\`es le site sp\'ecialis\'e tr\`es connu en DA : autodiff\footnote{\url{http://www.autodiff.org/}},
+
+
+ %\cite{autodiff}, 
+tableau \ref{tab:outils}. Les outils qui atteignent un ordre sup\'erieur \`a deux de d\'erivation 
+utilisent g\'en\'eralement le mode direct. On observe que la plupart des langages trait\'es sont
+C/C++, fortran et Matlab.
+
+
+
+
+\begin{table}[H]
+	\begin{center}
+{%\footnotesize
+\small
+\begin{tabular}{ | l | c | r | c | c | c | } \hline
+
+           &         & Transformation            & Mode   & Mode      & Ordre  \\
+  Logiciel & Langage & de code (t)               & direct &  inverse  &        \\
+           &         & surcharge (s)             &        &           &        \\
+
+\hline
+ ADC &  C/C++ &  s  & 1 & 0 & 2 \\
+ ADF  & Fortran77, 95 &  s  & 1 & 0 & 2 \\
+ ADG  & Fortran77 & s  & 0 & 1 & $>$2  \\
+ ADIC  & C/C++ & t  & 1 & 0 & 2 \\
+ ADIFOR  & Fortran77 & t  & 1 & 0 &  2\\
+ ADiMat  & MATLAB &  t & 1 & 0 & 2 \\
+ ADMAT / ADMIT  & MATLAB & s  & 1 & 1 & 2\\
+ ADOL-C  & C/C++ & s  & 1 & 1 & $>$2 \\
+ ADOL-F  & Fortran95 & s  & 1 & 1 & $>$2\\
+%  APMonitor  & Interpreted & s  & 1 & 0 &  \\
+ AUTO\_DERIV  & Fortran77, 95 & s  & 1 & 0 & 2\\
+ COSY INFINITY  & Fortran77, 95,C/C++ & s  & 1 & 0 &$>$2 \\
+ CppAD  & C/C++ & s  & 1 & 1 & $>$2 \\
+ FAD  & Haskell & s  & 1 & 0 & $>$2  \\
+ FADBAD/TADIFF  & C/C++ & s  & 1 & 1 & $>$2 \\
+ FFADLib  & C/C++ & s  & 1 & 0 & 2 \\
+ GRESS  & Fortran77 & t  & 1 & 1 & 1  \\
+ HSL\_AD02  & Fortran95 & s  & 1 & 1 & $>$2 \\
+ INTLAB  & MATLAB & s  & 1 & 0 & 2 \\
+ NAGWare Fortran 95   & Fortran77, 95 & t  & 1 & 0 & $>$2 \\
+ OpenAD  & C/C++,Fortran77, 95 &  t  & 1 & 1 & 2  \\
+ PCOMP  & Fortran77 & t  & 1 & 1 & 2 \\
+ pyadolc  & python & s  & 1 & 1 & 2 \\
+ pycppad  & Interpreted,python & s  & 1 & 1 & $>$2\\
+ Rapsodia  & C/C++,Fortran95 & s  & 1 & 0 &  $>$2\\
+ Sacado  & C/C++ & s  & 1 & 1 & 1 \\
+ TAF  & Fortran77, 95 & t  & 1 & 1 & 2 \\
+ TAMC  & Fortran77 & t  & 1 & 0 & 1 \\
+ TAPENADE  & C/C++,Fortran77, 95 & t  & 1 & 1 & $>$2 \\
+%  TaylUR  & Fortran95 &
+ TOMLAB /TomSym  & MATLAB & t/s & 1 & 1 & 2\\
+\hline
+
+
+\end{tabular}
+}
+	\end{center}
+	\caption{Plusieurs outils de DA}
+	\label{tab:outils}
+\end{table}
+
+
+
+
+
+% Etant donn\'e que nous voulons adapter un outil sous scilab, il est plus facile de lier une librairie 
+% au langage fortran. Nous avons fait le choix de Tapenade car il traite du code fortran et permet de produire 
+% un code diff\'erenti\'e qui pourra de nouveau être trait\'e. Ainsi, n'importe quel ordre peut être atteint. \\
+
+
+
+\section{Un outil de DA: Tapenade}
+\label{sec:tapenade}
+
+%     \subsection{Historique}
+
+Tapenade\footnote{disponible sur \url{http://www-sop.inria.fr/tropics/}} est un outil de diff\'erentiation automatique qui a commenc\'e \`a être d\'evelopp\'e en 1999
+par une \'equipe du projet Tropics \`a l'INRIA. 
+% Tapenade est l'acronyme pour Transformations et Outils Informatiques Pour le Calcul
+% Scientifique.
+ Il utilise la transformation de code. L'avantage, c'est que l'on va pouvoir diff\'erentier plusieurs fois
+puisque le code diff\'erenti\'e est vu comme une routine classique.
+
+Exemple d'utilisation : \cite{diffautoopa} OPA un mod\`ele de circulation oc\'eanique.
+
+
+    \subsection{Comment utiliser la DA pour les d\'eriv\'ees d'un point de vue th\'eorique}
+
+Ce que l'on cherche, c'est obtenir les d\'eriv\'ees successives du code fortran de mani\`ere efficace pour 
+une dimension assez grande $n=1000$.
+
+$$F=\nabla f \in \mathbb{R}^n \rightarrow \mathbb{R}^n$$
+Nous voulons l'expression $\nabla^2 f\cdot v$. Pour calculer par diff\'erentiation automatique, nous allons utiliser l'astuce 
+suivante :
+$$\nabla_x(\nabla_x f(x) \cdot d)) = \nabla_{xx}^2f(x) \cdot d$$ O\`u $d$ repr\'esente la direction obtenue.
+Au lieu de calculer la hessienne, nous allons appliquer le mode direct sur le calcul du gradient par un vecteur.
+Regardons sur un exemple : 
+$$f(x)=x_1^3x_2^2-10x_1x_2-x_2^3$$
+$$\nabla_x f(x)=F(x)=\left( \begin{array}{cc}3x_1^2x_3^2-10x_2 & 2x_1^3x_2-10x_1-3x_2^2\end{array} \right)$$
+$$\nabla_{xx}^2f(x)=\left( \begin{array}{cc}
+6x_1x_2^2 & 6x_1^2x_2-10 \\
+6x_1^2x_2-10 &  2x_1^3-6x_2 \\
+\end{array} \right)$$
+
+$$d = \left( \begin{array}{c} 1 \\2 \\ \end{array} \right)$$
+
+$$\nabla_xf(x).d=3x_1^2x_2^2-10x_2+4x_1^3x_2-20x_1-6x_2^2$$
+$$\nabla_x(\nabla_x f(x) \cdot d))=
+\left( \begin{array}{cc} 6x_1x_2^2+12x_1^2x_2-20 & 6x_1^2x_2-10+4x_1^3-12x_2 \end{array} \right) $$ 
+
+$$\nabla_{xx}^2f(x).d =
+ \left( \begin{array}{c} 6x_1x_2^2+12x_1^2x_2-20\\6x_1^2x_2-10+4x_1^3-12x_2 \\ \end{array} \right) $$
+%
+%
+Puisque la matrice hessienne est sym\'etrique, on remarque bien que 
+$$\left( \nabla_{xx}^2f(x).d \right)^T = \nabla_x(\nabla_xf(x).d))$$
+%
+%
+En mode inverse :
+$$\psi(t)=F(x+t \cdot d)=F(g(t))$$
+$g(t)=x+t \cdot d$ o\`u $d$ repr\'esente la direction
+$$\psi'(t)=\nabla F(x+t \cdot d)d$$
+$$\psi'(0)=\nabla F(x)d$$
+%
+Ainsi, pour obtenir $\nabla^2 f(x)\cdot v$, nous appliquons le mode direct apr\`es le mode inverse.
+Le fait d'appliquer ces deux modes, l'un apr\`es l'autre nous donnent le bon r\'esultat uniquement parce qu'\`a la base
+nous utilisons une fonction scalaire et que la matrice hessienne est sym\'etrique. Dans le cas contraire, si la $i$\`eme ligne de $\nabla^2 f$ 
+ne correspondrait pas \`a sa $i$\`eme colonne et nous ne pourrions pas utiliser ce proc\'ed\'e. \`A partir de l\`a, nous pouvons r\'eappliquer plusieurs fois 
+le mode direct pour atteindre $\nabla (\nabla f \cdot d)\cdot d$.
+
+
+
+    %\subsection{La librairie MGH}
+    \subsection{Utilisation de Tapenade}
+
+L'outil peut s'utiliser soit en local, soit en ligne grâce \`a un serveur. Son utilisation s'effectue en plusieurs \'etapes.
+D'abord, il faut fournir le code en fortran qui contient le code \`a diff\'erentier sous la forme d'un fichier. Ensuite,
+il faut d\'efinir la routine que l'on souhaite diff\'erentier et les variables d'entr\'ees par rapport \`a laquelle la diff\'erentiation doit
+être faite et les variables de sortie d\'ependantes. Enfin, il faut choisir le mode : tangent, inverse ou multi-directionnel.
+Supposons que la variable de sortie est $Y \in \mathbb{R}^n$, d\'ependante de $X \in \mathbb{R}^m$. En fait, nous avons $Y=f(X)$ avec
+$f:\mathbb{R}^m\rightarrow\mathbb{R}^n$. Notons $J:=\nabla f \in \mathbb{R}^n\times\mathbb{R}^m$ la matrice jacobienne de $f$.
+La routine contient donc les arguments $Y$; une variable r\'esultat et $X$ la variable d'entr\'ee.
+
+
+\paragraph{Mode direct} \hfill \\
+Comme expliqu\'e dans le paragraphe \ref{chap2:tangent}, en plus de sp\'ecifier la variable d'entr\'ee $X$,
+ nous allons aussi sp\'ecifier une variation $dX$ sur
+ laquelle la jacobienne va s'appliquer.\\
+
+
+$\left( 
+\begin{array}{c} 
+\dot{y_1} \\
+\dot{y_2} \\
+\vdots \\
+\dot{y_m}
+
+\end{array}
+\right)
+=dY = J(X) \times dX =
+\underbrace{
+\left( 
+\begin{array}{ccccc} 
+\frac{\partial y_1}{\partial x_1} & \frac{\partial y_1}{\partial x_2} &
+ \frac{\partial y_1}{\partial x_3} & \cdots & \frac{\partial y_1}{\partial x_m} \\
+\frac{\partial y_2}{\partial x_1} & \frac{\partial y_2}{\partial x_2} &
+ \frac{\partial y_2}{\partial x_3} & \cdots & \frac{\partial y_2}{\partial x_m} \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+\frac{\partial y_n}{\partial x_1} & \frac{\partial y_n}{\partial x_2} &
+ \frac{\partial y_n}{\partial x_3} & \cdots & \frac{\partial y_n}{\partial x_m} \\
+\end{array}
+\right)}_{\text{Jacobienne en }X}
+ \times
+\left( 
+\begin{array}{c} 
+\Tilde{x_1} \\
+\Tilde{x_2} \\
+\vdots \\
+\Tilde{x_m}
+\end{array}
+\right)
+ $ \\
+%
+Par exemple, si $dX$ est initialis\'ee \`a $e_1$, nous aurons la premi\`ere colonne de la Jacobienne et si $Y$ est un scalaire 
+nous aurons la premi\`ere composante de son gradient. Deux nouvelles variables vont être ajout\'ees. De la routine\\
+\verb!SUBROUTINE FONCTION(X,Y)!\\
+le logiciel g\'en\`ere :\\
+\verb!SUBROUTINE FONCTION_D(X, Xd, Y, Yd)!\\
+o\`u {\tt Y}, {\tt Yd} sont les variables de sortie et {\tt X}, {\tt Xd} les variables d'entr\'ee. On a donc
+{\tt Y=}$F${\tt (X)} et {\tt Yd=}$\nabla F${\tt (X).Xd}
+
+
+Le mode multidirectionnel revient \`a appliquer \`a plusieurs vecteurs {\tt Xd}, en fait {\tt Xd} est une matrice. %En utilisant le mode directe sur m $(dX)_i=I$ 
+
+
+\paragraph{Mode inverse} \hfill \\
+De même, un vecteur doit être sp\'ecifi\'e en mode inverse mais comme le calcul se fait \`a rebours, l'op\'eration 
+est invers\'ee.
+
+
+
+
+$\left( 
+\begin{array}{c} 
+\bar{x_1} \\
+\bar{x_2} \\
+\vdots \\
+\bar{x_m}
+
+\end{array}
+\right)
+=dX = \underbrace{J^*(X)}_{J(X)^T} \times dY = 
+\underbrace{
+\left(
+\begin{array}{ccccc} 
+\frac{\partial y_1}{\partial x_1} & \frac{\partial y_2}{\partial x_1} &
+ \frac{\partial y_3}{\partial x_1} & \cdots & \frac{\partial y_n}{\partial x_1} \\
+\frac{\partial y_1}{\partial x_2} & \frac{\partial y_2}{\partial x_2} &
+ \frac{\partial y_3}{\partial x_2} & \cdots & \frac{\partial y_n}{\partial x_2} \\
+\vdots & \vdots & \vdots & \ddots & \vdots \\
+\frac{\partial y_1}{\partial x_m} & \frac{\partial y_2}{\partial x_m} &
+ \frac{\partial y_3}{\partial x_m} & \cdots & \frac{\partial y_n}{\partial x_m} \\
+\end{array}
+\right)}_{\text{Transpos\'ee de la jacobienne en }X}
+ \times
+\left( 
+\begin{array}{c} 
+\bar{y_1} \\
+\bar{y_2} \\
+\vdots \\
+\bar{y_m}
+
+\end{array}
+\right)
+ $ \\ 
+En reprenant le même exemple de 
+\verb!SUBROUTINE FONCTION(X,Y)!\\
+Tapenade g\'en\`ere :\\
+\verb!SUBROUTINE FONCTION_B(X, Xb, Y, Yb)!\\
+cette fois-ci {\tt Y} et {\tt \underline{Xb}}$:=dX$ sont les variables de sortie et {\tt X}, {\tt\underline{Yb}}$:=dY$ les variables d'entr\'ee. 
+Si nous appliquons sur $dY=e_i$ nous obtiendrons la $i$\`eme ligne de la jacobienne.
+Le calcul correspond \`a {\tt Xb=}$\nabla F(${\tt X}$)^T${\tt Yb}
+
+
+
+
+
+\paragraph{D\'eriv\'ees sup\'erieures} 
+Pour les ordres sup\'erieurs, nous allons r\'eappliquer le même proc\'ed\'e sur les fonctions obtenues. Par exemple appliquer le mode direct sur 
+le mode inverse, c'est-\`a-dire sur la routine \verb!SUBROUTINE FONCTION_B(X, Xb, Y, Yb)!\\
+En sp\'ecifiant de diff\'erentier {\tt Xb} par rapport \`a {\tt x} : \\
+\verb! SUBROUTINE FONCTION_B_D(X, Xd, Xb, Xbd, Y, Yb)!\\
+variables d'entr\'ee \verb!X Xd Xb Yb!\\
+variables de sortie \verb!Xbd, Y!\\
+{\tt Xbd}=$\nabla(\nabla F${\tt (X)}$\cdot${\tt Yb}$)^T)\cdot${\tt Xd}\\
+
+
+
+Malheureusement, le logiciel Tapenade n'a pas \'et\'e conçu pour obtenir des d\'eriv\'ees sup\'erieures \`a deux avec le mode inverse. D'autre
+part le mode inverse sur inverse n'existe pas (il serait trop compliqu\'e \`a g\'erer).
+\`A l'aide d'un Makefile, j'ai g\'en\'er\'e l'ensemble des d\'eriv\'ees dont j'avais besoin,
+ voir l'appendice \ref{annexe:B} pour savoir comment g\'en\'erer les fichiers n\'ecessaires. Pour chaque fonction, 
+plusieurs fichiers sont g\'en\'er\'es : un pour chaque op\'eration que l'on souhaite. Pour atteindre les d\'eriv\'ees
+d'ordre sup\'erieur, les fichiers g\'en\'er\'es sont redonn\'es \`a l'outil pour être de nouveau diff\'erenti\'es.
+
+
+    \subsection{Avantages et inconv\'enients de Tapenade}
+
+La transformation du code est la meilleure approche pour la DA; elle donne la capacit\'e de calculer les gradients
+\`a un faible coût puisqu'elle ex\'ecute de mani\`ere imp\'erative comme le programme original. De plus, il n'y a pas 
+de restriction sur le style ou la taille de l'application \`a diff\'erentier. Au lieu de coder \`a la main une fonction
+poss\'edant plusieurs millions de lignes, ce qui est source d'erreurs et demande un effort consid\'erable, il est plus pratique 
+de le faire automatiquement. C'est un outil qui progresse encore; les performances du calcul de l'adjoint sont en cours 
+d'am\'elioration.
+Cependant, il ne traite que du code FORTRAN et C, même si th\'eoriquement, tous les langages peuvent être trait\'es. Le
+sch\'ema optimal de checkpoints imbriqu\'es pour un programme quelconque reste un probl\`eme de recherche.
+De plus, les boîtes noires ne peuvent \'evidemment pas être g\'er\'ees, ce qui n'est pas le cas pour la diff\'erentiation par diff\'erences
+finies. Pour finir, la plus grosse difficult\'e vient du fait que le logiciel ne g\`ere pas l'ordre trois avec le mode inverse. Il a donc
+fallu adapter la librairie mais malgr\'e tout, certains cas ne sont pas fiables, et donne par exemple une hessienne non sym\'etrique.
+
+
+
+    \subsection{Difficult\'es pour les d\'eriv\'ees sup\'erieures}
+
+La complexit\'e du stockage des variables lors de la diff\'erentiation automatique est expliqu\'ee dans le livre de Griewank
+ \cite{Griewank2008EDP}. Il analyse entre autres le stockage des variables avec l'ordre des op\'erations atomiques et le 
+mode inverse r\'ep\'et\'e. Bien qu'efficace, le mode inverse comporte des complications avec Tapenade,
+ lorsque l'on veut diff\'erentier \`a un ordre sup\'erieur.
+Contrairement au mode tangent qui ne fait que rajouter des op\'erations \'el\'ementaires dans le code, le mode inverse
+va faire apparaître des appels \`a des routines : {\tt PUSH} et {\tt POP}. Celles-ci vont permettre de g\'erer une pile qui 
+alternativement stockera et restituera les variables tel que d\'ecrit \`a la section \ref{subsection:strategies}. Elles sont cod\'ees en C et appartiennent 
+\`a une libraire ext\'erieure mais ne sont pas fournies \`a l'outil de diff\'erentiation. Leur propre code adjoint a \'et\'e cod\'e manuellement
+mais seulement \`a l'ordre un par Tapenade. Pour obtenir des d\'eriv\'ees d'ordre sup\'erieur, il a fallu coder leurs d\'eriv\'ees.
+% Voir \ref{annexe:Ctap}.
+
+
+
+
+
+  \section{D\'ecomposition de Cholesky modifi\'ee}
+
+\label{chap3:cholesky}
+
+La d\'ecomposition fournie par scilab n'est pas exploitable, voir la section \ref{chap4:decomp}.
+De plus, il existe plusieurs versions de la d\'ecomposition de Cholesky modifi\'ee en Scilab mais pas 
+de version efficace. Cela est li\'e intrins\`equement \`a scilab qui est un langage de haut niveau et n'est pas performant pour effectuer du code
+imp\'eratif sur des grandes dimensions comparativement au C ou Fortran.
+Par cons\'equent, nous avons choisi deux routines appartenant \`a Lapack\footnote{\url{http://www.netlib.org/lapack/}}, une libraire sur les syst\`emes lin\'eaires \'ecrite en fortran.
+ La premi\`ere permet la d\'ecomposition 
+de Cholesky modifi\'ee et la deuxi\`eme la r\'esolution du syst\`eme avec cette d\'ecomposition, nomm\'ee {\tt dsytrf} et {\tt dsytrs} respectivement. 
+Cette d\'ecomposition de Cholesky modifi\'ee utilise la m\'ethode de pivotement de Bunch-Kaufman (BK) \cite{Bunch}.
+
+Soit une matrice $A \in \mathbb{R}^{n\times n}$ non nulle, la factorisation fournit $$P(A+E)P^T=L(D+F)L^T.$$ $F$ est choisie pour que $D+F$ et ainsi
+$A+E$ soient d\'efinies positives. Cette technique a \'et\'e propos\'ee par Mor\'e et Sorensen \cite{More}. L'id\'ee consiste \`a 
+trouver une permutation $\Pi$ et un entier $s=1$ ou $2$ tel que 
+
+\begin{equation*}
+\Pi A \Pi^T = 
+\left[
+\begin{array}{cc}
+ E & C^T \\
+ C & B \\
+\end{array}\right]
+\end{equation*}
+avec $E\in \mathbb{R}^{s\times s}$ non singuli\`ere et $B\in \mathbb{R}^{(n-s)\times (n-s)}$. En choisissant correctement $\Pi$, nous avons la factorisation :
+
+\begin{equation*}
+\Pi A \Pi^T = 
+\left[
+\begin{array}{cc}
+ I_s & 0 \\
+ CE^{-1} & I_{n-s} \\
+\end{array}\right]
+\left[
+\begin{array}{cc}
+ E & 0 \\
+ 0 & B-CE^{-1}C^T \\
+\end{array}\right]
+\left[
+\begin{array}{cc}
+ I_s & E^{-1}C^T \\
+ 0 & I_{n-s} \\
+\end{array}\right]
+\end{equation*}
+Le proc\'ed\'e est r\'ep\'et\'e r\'ecursivement sur la matrice $S=B-CE^{-1}C^T$ de taille\\ $(n-s)\times (n-s)$. On remarque ainsi qu'au lieu
+d'utiliser un pivot de taille $1\times 1$, on peut utiliser une matrice $2\times2$.
+
+
+
+
+ Selon Cheng et Higham \cite{Higham}, l'algorithme de BK, que celui de Schnabel et Heskow \cite{choleskymod}, a un coût identique
+ \`a la d\'ecomposition de Cholesky standard relativement
+aux termes d'ordre les plus \'elev\'es, cependant les objectifs O1 et O3 de la partie \ref{chap1:decomposition} sont difficilement satisfaits.
+Il se peut que la matrice $A+E$ soit mal conditionn\'ee car $\lVert L \rVert_{\infty}$ n'est pas born\'ee et par cons\'equent les valeurs propres de $D$ peuvent 
+largement diff\'erer de $A$. 
+Les auteurs proposent ainsi une autre version de l'algorithme de BK, permettant de satisfaire les conditions mais nous consid\'ererons que 
+les routines de lapack permettrons d'obtenir des directions satisfaisantes d'autant plus que nous utiliserons une recherche lin\'eaire ce qui injectera
+un niveau de contrôle en plus.
+
+Afin d'obtenir une matrice d\'efinie positive, nous profitons de cette d\'ecomposition pour changer les \'el\'ements diagonaux.
+L'avantage, c'est que l'on a plus besoin de faire ces changements sur une matrice $n$ par $n$ mais seulement $2\times2$ ou $1\times1$.
+
+\begin{algorithm}                     % enter the algorithm environment
+\caption{Changement de la diagonale}          % give the algorithm a caption
+\label{alg:diag}                           % and a label for \ref{} commands later in the document
+\begin{algorithmic}
+\STATE \textbf{Pr\'ealables:} %Variables en entr\'ee :  
+\begin{itemize}
+\item[$\bullet$] $\epsilon>0$
+\item[$\bullet$] $\Tilde{D}$ la matrice diagonale par bloc
+\end{itemize}
+\STATE \textbf{Sortie} %Variables en entr\'ee :  
+\begin{itemize}
+\item[$\bullet$] $D$ la matrice diagonale par bloc avec pour valeur 
+propre minimale $\lambda_{min} \geq \epsilon$
+\end{itemize}
+
+\STATE Pour chaque bloc de la diagonale $\Tilde{D_k}$,
+\IF{$\Tilde{D_k}$ est de dimension $1\times1$}
+\STATE $D_k\leftarrow \max(\Tilde{D_k},\epsilon)$
+\ELSE 
+%\COMMENT{$D$ est de dimension $2\times2$} 
+\STATE $[Z,W]=spec(\Tilde{D_k)}$
+\COMMENT{Il s'agit de la diagonalisation de $\Tilde{D_k}$ : $ZWZ^T=\Tilde{D_k}$ avec $W$ matrice diagonale}
+\STATE $D_k\leftarrow Z*diag(max(diag(W),\epsilon))*Z^T$
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+
+% function D=moddiag(D,Ipiv)
+% [nr,n]=size(D);
+% eps=0.00001
+% 
+% first(1)=%t
+% for j=1:n-1
+% 	    if(Ipiv(j)<0 & first(j)) then first(j+1)=%f, D(j,j+1)= D(j+1,j)
+% 	    else first(j+1)=%t
+% 	    end
+% end
+% for i=1:n
+%       if(first(i)) then
+% 	  if(Ipiv(i)<0) then
+% 	      [Z,W]=spec(D(i:i+1,i:i+1));
+% 	      D(i:i+1,i:i+1)=Z*diag(max(diag(W),eps))*Z'
+% 	      else D(i,i)=max(D(i,i),eps)
+% 	  end
+%       end
+% end
+% endfunction
+% eps=0.00001
+% A=rand(2,2)
+% A=A+A'
+% [Z,W]=spec(A)
+% A2=Z*diag(max(diag(W),eps))*Z'
+
+
+
+\section{R\'esolution des syst\`emes lin\'eaires}
+
+
+La r\'esolution des syst\`emes $Ax=b$ s'effectue en trois temps. Tout d'abord, $A$ qui est par exemple 
+la hessienne de notre fonction, est d\'ecompos\'ee en
+
+ $L\Tilde{D}L^T=P^T(A+E)P$ o\`u $D$ est une matrice diagonale par bloc soit de taille $1\times 1$, soit $2\times 2$.
+ La factorisation a un coût de $\frac{1}{3}n^3$. Ensuite, on modifie chacun de ces blocs
+pour le rendre d\'efini positif : $D\leftarrow \Tilde{D}+\Delta \Tilde{D}$. Cette op\'eration est 
+de l'ordre de $n$ mais elle est effectu\'ee avec scilab
+ Enfin, on r\'esout le syst\`eme $LDL^Tx=b$ qui est une op\'eration en $n^2$.
+
+
+
+
+%  Pour une d\'ecomposition efficace, j'ai utilis\'e une routine de lapack \cite{lapack}; dsytrf. \\
+% Ainsi, pour une matrice sym\'etrique, la d\'ecomposition utilise la m\'ethode de Bunch-Kaufman 
+% en pivotant la diagonale\cite{choleskymod}.
+
+
+
+
