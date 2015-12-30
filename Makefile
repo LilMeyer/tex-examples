@@ -18,7 +18,19 @@ formula2png:
 multiple-tikz-figures:
 	cd multiple-tikz-figures && pdflatex -shell-escape main && cd ..
 
+favicons:
+	rm -f favicons/figures/*
+	cd favicons && lualatex -shell-escape main && cd ..
+	convert -density 300 favicons/figures/figure_0.pdf -quality 200 favicons/figures/figure_0.png
+	convert -density 300 favicons/figures/figure_1.pdf -quality 200 favicons/figures/figure_1.png
+	convert favicons/figures/figure_1.png  -bordercolor white -border 0 \
+					\( -clone 0 -resize 16x16 test\) \
+					\( -clone 0 -resize 32x32 \) \
+					\( -clone 0 -resize 48x48 \) \
+					\( -clone 0 -resize 64x64 \) \
+					-delete 0 -alpha off -colors 256 favicon.ico
 
-# convert -density 300 multiple-tikz-figures/figures/figure_0.pdf -quality 200 multiple-tikz-figures/figures/figure_0.png
+test:
+	convert favicons/figures/figure_1.png -define icon:auto-resize=32 favicon.ico
 
-.PHONY: graph formula2png multiple-tikz-figures
+.PHONY: graph formula2png multiple-tikz-figures favicons test

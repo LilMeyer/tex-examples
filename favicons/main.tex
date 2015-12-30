@@ -1,0 +1,70 @@
+\documentclass{article}
+\usepackage{tikz}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{rotating}
+
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+\usetikzlibrary{arrows}
+\usetikzlibrary{automata}
+\usetikzlibrary{calc}
+\usetikzlibrary{decorations.pathmorphing}
+\usetikzlibrary{er}
+\usetikzlibrary{external}
+\usetikzlibrary{fit}
+\usetikzlibrary{graphs, graphdrawing}
+\usetikzlibrary{intersections}
+\usetikzlibrary{matrix}
+\usetikzlibrary{mindmap}
+\usetikzlibrary{positioning}
+\usetikzlibrary{quotes}
+\usetikzlibrary{shapes}
+\usetikzlibrary{snakes}
+\usetikzlibrary{trees}
+
+\usegdlibrary{force, layered, trees}
+
+\usetikzlibrary{external}
+\tikzexternalize[prefix=figures/]{main} % provide the file’s real name
+\begin{document}
+
+\definecolor{col1}{rgb}{0.25,0.25,0.25}
+% \definecolor{col1}{RGB}{64,64,64}
+
+\tikzset{
+  A/.style = {circle,fill=col1,minimum size=2.0cm},
+  B/.style = {circle,minimum size=1.5cm}
+}
+
+{
+\tikzsetfigurename{figure_}
+\begin{tikzpicture}
+  \graph[nodes={circle,fill=col1}] {
+    1 -- 2;
+    2 -- 3;
+    3 -- 1;
+  };
+\end{tikzpicture}
+
+
+\begin{tikzpicture}
+[decoration={start radius=1.5cm,end radius=1.5cm,amplitude=2mm,angle=30}]
+\node [B] (x1) at (-0.5,0)  {};
+\node [B] (x1) at (3.5,0)  {};
+\node [B] (x1) at (0,3.19808)  {};
+\node [B] (x1) at (0,-0.5)  {};
+
+\node [A](x1) at (0,0)  {};
+\node [A](x2) at (3.0,0)  {};
+\node [A](x3) at (1.5,2.59808) {};
+% \filldraw [draw=red,fill=black,decorate,decoration=circle connection bar] (1,0) -- (3,0);
+\end{tikzpicture}
+
+% \node [circle,fill=col1,minimum size=0.5cm] at (0,0)  {1};
+% \node [circle,fill=col1,minimum size=0.5cm] at (3.0,0)  {2};
+% \node [circle,fill=col1,minimum size=0.5cm] at (1.5,2.59808)  {3};
+
+}% here, the old file name will be restored:
+\end{document}
