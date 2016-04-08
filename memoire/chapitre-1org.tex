@@ -1,14 +1,8 @@
 
 
-
-
-
-
-
-
 \section{Introduction aux directions de descente}
 Commençons par d\'efinir le contexte avec un peu de vocabulaire et les hypoth\`eses faites sur le probl\`eme. Puis nous allons analyser
- les concepts n\'ecessaires pour la suite. 
+ les concepts n\'ecessaires pour la suite.
 \subsection{Hypoth\`eses de travail}
 Dans l'ensemble du texte, nous faisons deux hypoth\`eses : la continuit\'e et la diff\'erentiabilit\'e.
 Soit le probl\`eme d'optimisation suivant :
@@ -17,20 +11,20 @@ Soit le probl\`eme d'optimisation suivant :
 \label{eq:princ}
 \end{equation}
 Il s'agit d'un probl\`eme sans contraintes. La fonction objectif $f$, \`a valeurs de
- $\mathbb{R}^n$ dans $\mathbb{R}$, est continue et diff\'erentiable. L'ordre de diff\'erentiabilit\'e va d\'ependre de la m\'ethode choisie. 
- Cela exclut les probl\`emes en nombres entiers. On parle de probl\`eme d'optimisation \`a $n$ variables de d\'ecision avec $0<n$. 
+ $\mathbb{R}^n$ dans $\mathbb{R}$, est continue et diff\'erentiable. L'ordre de diff\'erentiabilit\'e va d\'ependre de la m\'ethode choisie.
+ Cela exclut les probl\`emes en nombres entiers. On parle de probl\`eme d'optimisation \`a $n$ variables de d\'ecision avec $0<n$.
 Il existe deux types de solutions : les minima locaux, dont aucun point de leur voisinage n'est meilleur et les minima globaux, dont aucun des points
-du domaine n'est meilleur. Par la suite, nous ne traiterons que les minima locaux. 
+du domaine n'est meilleur. Par la suite, nous ne traiterons que les minima locaux.
 
-En notant $\nabla f(x) $ ou $F(x)^T:\mathbb{R}^n\rightarrow \mathbb{R}^n$ le gradient de la fonction objectif, un vecteur ligne et 
-$ \nabla^2f(x)$ ou $\nabla F(x): \mathbb{R}^n\rightarrow \mathbb{R}^{n\times n} $ son hessien, la condition n\'ecessaire d'optimalit\'e 
-indique que si $x^*$ est un minimum local et que $f$ est diff\'erentiable dans un voisinage ouvert $V$ de $x^*$ alors 
+En notant $\nabla f(x) $ ou $F(x)^T:\mathbb{R}^n\rightarrow \mathbb{R}^n$ le gradient de la fonction objectif, un vecteur ligne et
+$ \nabla^2f(x)$ ou $\nabla F(x): \mathbb{R}^n\rightarrow \mathbb{R}^{n\times n} $ son hessien, la condition n\'ecessaire d'optimalit\'e
+indique que si $x^*$ est un minimum local et que $f$ est diff\'erentiable dans un voisinage ouvert $V$ de $x^*$ alors
 \begin{equation}
 \label{equ:prem}
 \nabla f(x^*)=0.
 \end{equation}
 Ces points sont nomm\'es points stationnaires.
-Si, de plus, $f$ est deux fois diff\'erentiable sur $V$ alors 
+Si, de plus, $f$ est deux fois diff\'erentiable sur $V$ alors
 \begin{equation}
 \label{equ:sec}
 \nabla^2 f(x^*) \text{ est semi d\'efinie positive.}
@@ -43,7 +37,7 @@ Lorsque la matrice est d\'efinie positive, il s'agit d'une condition suffisante.
 \subsection{M\'ethodes avec recherche lin\'eaire}
 Soit une fonction $f:\ \mathbb{R}^n \rightarrow \mathbb{R}$ continûment diff\'erentiable sur $\mathbb{R}^n$ et \\
 $h_{x,d}(\theta)=f(x+\theta d)$.
-Pour le probl\`eme de minimisation \eqref{eq:princ}, les algorithmes couramment utilis\'es sont g\'en\'eralement les algorithmes de 
+Pour le probl\`eme de minimisation \eqref{eq:princ}, les algorithmes couramment utilis\'es sont g\'en\'eralement les algorithmes de
 descente car ils permettent d'obtenir une convergence plus forte que pour des probl\`emes d'\'equations
 non lin\'eaires.
 
@@ -61,10 +55,10 @@ descente de $f$ au point $x$ s'il existe $0<\theta_m$ tel que pour tout $\theta 
 $f(x+\theta d)<f(x)$. \\
 \end{frdefinition}
 %
-Il s'agit d'algorithmes it\'eratifs bas\'es sur le fait que si un point $x$ ne satisfait pas aux conditions d'optimalit\'e, alors il est 
+Il s'agit d'algorithmes it\'eratifs bas\'es sur le fait que si un point $x$ ne satisfait pas aux conditions d'optimalit\'e, alors il est
 possible de construire un autre point $x'$ qui v\'erifie $f(x')<f(x)$.
 L'ensemble du {\it Demi Espace de Diminution} en $x$, not\'e $DED(x)$ est l'ensemble des directions qui satisfait \`a la relation :
-$\nabla f(x)d<0$. Ces algorithmes ont tous la même forme;  trouver une direction dans le $DED(x)$ et 
+$\nabla f(x)d<0$. Ces algorithmes ont tous la même forme;  trouver une direction dans le $DED(x)$ et
 ensuite approcher la fonction $h_{x,d}$ pour passer du point $x_k$ au suivant $x_{k+1}=x_k+\theta d$. N\'eanmoins, il faut s'assurer que la suite ${x_k}$
 poss\`ede bien des points d'accumulation satisfaisant aux conditions.
 
@@ -72,8 +66,8 @@ poss\`ede bien des points d'accumulation satisfaisant aux conditions.
 %-----------------------D\'efinition direction suffisamment descente
 \begin{frdefinition}
 \label{def:2}
- Une direction d est consid\'er\'ee suffisamment descendante s'il existe deux constantes positives $\gamma_0$ et $\gamma_1$ 
- ind\'ependantes de $x$ telles que d satisfasse aux in\'egalit\'es suivantes : 
+ Une direction d est consid\'er\'ee suffisamment descendante s'il existe deux constantes positives $\gamma_0$ et $\gamma_1$
+ ind\'ependantes de $x$ telles que d satisfasse aux in\'egalit\'es suivantes :
 
 \begin{equation}  % L'environnement equation num\'erote
 		  % l'\'equation. L'\'etoile sp\'ecifie de ne pas mettre
@@ -110,8 +104,8 @@ poss\`ede bien des points d'accumulation satisfaisant aux conditions.
 \noindent
 Cette d\'efinition assure que toute direction $d$ utilis\'ee par un algorithme de descente est un vecteur assez long, et fait un angle assez
 aigu avec l'oppos\'e de $\nabla f$. La strat\'egie, appel\'ee {\it linesearch}, consiste \`a minimiser $h_{x,d}(\theta)$ par rapport \`a $\theta$. %\min_{\theta}
-\'Evidemment, le minimum $\theta_m$ est approximatif, nous aurons pas besoin d'une pr\'ecision aussi grande que le minimum $x^*$. 
-On peut d\'emontrer que pour une point dans le voisinage de la solution v\'erifiant les conditions suffisantes du 
+\'Evidemment, le minimum $\theta_m$ est approximatif, nous aurons pas besoin d'une pr\'ecision aussi grande que le minimum $x^*$.
+On peut d\'emontrer que pour une point dans le voisinage de la solution v\'erifiant les conditions suffisantes du
 second ordre, pour des directions \'etudi\'ees dans ce m\'emoire, la recherche lin\'eaire n'est plus active.
 
 
@@ -133,15 +127,15 @@ f(x+\theta d)-f(x) \leq \tau_0 \theta \nabla f(x)d, \ \tau_0 \in ]0,\frac{1}{2}[
 \tau_1 \nabla f(x)d \leq  \nabla f(x+\theta d)d , \ \tau_1 \in ]\tau_0,1[.
 \tag{Wolfe}
 \end{equation}
- 
+
 
 
 \end{frdefinition}
 
 \paragraph{Famille de directions suffisamment descendantes}
 Consid\'erons le cas g\'en\'eral d'une direction $\bar{d}=-H\nabla f(x)^T$, comme la direction de Newton, il s'agit d'une
-transformation lin\'eaire de la direction de pente la plus forte. En supposant que $H$ est 
-une matrice d\'efinie positive, alors la direction $\bar{d}$ v\'erifie les conditions d'une direction suffisamment 
+transformation lin\'eaire de la direction de pente la plus forte. En supposant que $H$ est
+une matrice d\'efinie positive, alors la direction $\bar{d}$ v\'erifie les conditions d'une direction suffisamment
 descendante. En effet
 $$\nabla f(x)\bar{d}=-\nabla f(x)H\nabla f(x)^T.$$
 En notant $\lambda_{min}$ la plus petite valeur propre de H, on a
@@ -152,7 +146,7 @@ L'ensemble des algorithmes de descente peut être g\'en\'eralis\'e sous la forme
 \begin{algorithm}                     % enter the algorithm environment
 \caption{Algorithme de descente}          % give the algorithm a caption
 \label{alg:1}                           % and a label for \ref{} commands later in the document
-\begin{algorithmic}  
+\begin{algorithmic}
 \WHILE{$\neg$ fini}
 \STATE $d \leftarrow$  direction qui satisfait la d\'efinition \ref{def:2}
 \STATE $\theta \leftarrow$  qui satisfait la d\'efinition \ref{def:3}, les crit\`eres d'Armijo et Wolfe
@@ -177,7 +171,7 @@ probl\`eme $\min f(x)$.
 \section{Recherche lin\'eaire}
 % ----------------------------------------------------
 Pour s'assurer que les m\'ethodes utilis\'ees convergent correctement, une possibilit\'e est d'utiliser une recherche lin\'eaire. En effet, celle-ci
-va nous garantir que l'on ne s'\'eloigne pas trop du point courant. La direction de Newton par exemple peut fournir des directions 
+va nous garantir que l'on ne s'\'eloigne pas trop du point courant. La direction de Newton par exemple peut fournir des directions
 de norme \'elev\'ee et du même coup la convergence n'est pas syst\'ematique. Ceci se remarque d'autant que la dimension est grande.
 Il existe plusieurs techniques pour nous assurer que la valeur de la fonction objectif diminue bien au court des it\'erations
 si on poss\`ede une direction de descente, comme la r\'egion de confiance.
@@ -193,34 +187,34 @@ si on poss\`ede une direction de descente, comme la r\'egion de confiance.
 % au syst\`eme de n \'equations avec n inconnues :
 % $$f_i(x_1,\hdots,x_n)=0, \ 1\leq i\leq n$$
 % o\`u les $f_1,\hdots, f_n$ sont les composantes de $F$.
-% On suppose que $F$ est continûment diff\'erentiable sur un ouvert convexe, ici $\mathbb{R}^n$ et 
+% On suppose que $F$ est continûment diff\'erentiable sur un ouvert convexe, ici $\mathbb{R}^n$ et
 % qu'il existe $x^*$ tel que $F(x^*)=0$ et $F'(x^*)$ est non singuli\`ere.
 
-La m\'ethode de Newton joue un rôle central dans la r\'esolution d'\'equations non lin\'eaires et ainsi dans l'optimisation 
+La m\'ethode de Newton joue un rôle central dans la r\'esolution d'\'equations non lin\'eaires et ainsi dans l'optimisation
 non lin\'eaire. Elle permet de trouver les racines d'une fonction. Comme le montre la condition n\'ecessaire du premier ordre,
 il faut trouver un point tel que $F(x)^T:=\nabla f(x)=0$.
 
- L'id\'ee est de simplifier notre \'equation, tr\`es souvent complexe, en une \'equation plus simple : une \'equation 
+ L'id\'ee est de simplifier notre \'equation, tr\`es souvent complexe, en une \'equation plus simple : une \'equation
 quadratique. Pour obtenir cette simplification nous utilisons la relation de Taylor.
 
 
-% 
+%
 % \begin{frdefinition}\textbf {(Mod\`ele lin\'eaire d'une fonction)} \\
-% Soit $f:\mathbb{R}^n\rightarrow \mathbb{R}$ une fonction diff\'erentiable. Le mod\`ele lin\'eaire de $f$ en 
-% $x^*$ est une fonction $l_{x^*}:\mathbb{R}^n\rightarrow \mathbb{R}$ d\'efinie par 
+% Soit $f:\mathbb{R}^n\rightarrow \mathbb{R}$ une fonction diff\'erentiable. Le mod\`ele lin\'eaire de $f$ en
+% $x^*$ est une fonction $l_{x^*}:\mathbb{R}^n\rightarrow \mathbb{R}$ d\'efinie par
 % \begin{equation}
 % l_{x^*}(x)=f(x^*)+\nabla f(x^*)(x-x^*)
 % \end{equation}
-% o\`u $\nabla f(x^*)$ est le gradient de $f$ en $x^*$. 
+% o\`u $\nabla f(x^*)$ est le gradient de $f$ en $x^*$.
 % \end{frdefinition}
 
 
 \begin{frdefinition}\textbf {(Mod\`ele quadratique d'une fonction)} \\
-Soit $f:\mathbb{R}^n\rightarrow \mathbb{R}$ une fonction deux fois diff\'erentiable. Le mod\`ele quadratique de $f$ en 
-$\bar{x}$ est une fonction $q_{\bar{x}}:\mathbb{R}^n\rightarrow \mathbb{R}$ d\'efinie par 
+Soit $f:\mathbb{R}^n\rightarrow \mathbb{R}$ une fonction deux fois diff\'erentiable. Le mod\`ele quadratique de $f$ en
+$\bar{x}$ est une fonction $q_{\bar{x}}:\mathbb{R}^n\rightarrow \mathbb{R}$ d\'efinie par
 $$q_{\bar{x}}(x)=f(\bar{x})+\nabla f(\bar{x})(x-\bar{x})+\frac{1}{2}(x-\bar{x})^T\nabla^2 f(\bar{x})(x-\bar{x})$$
 o\`u $\nabla f(\bar{x})$ est le gradient de $f$ en $\bar{x}$ et $\nabla^2 f(\bar{x})$ est la matrice hessienne de
-$f$ en $\bar{x}$. En posant $d=x-\bar{x}$, on obtient la formulation \'equivalente : 
+$f$ en $\bar{x}$. En posant $d=x-\bar{x}$, on obtient la formulation \'equivalente :
 \begin{equation*}
 q_{\bar{x}}(d)=f(\bar{x})+\nabla f(\bar{x})d+\frac{1}{2}d^T\nabla^2 f(\bar{x})d.
 \end{equation*}
@@ -236,34 +230,34 @@ La condition suffisante d'optimalit\'e du premier ordre nous donne :
 \end{equation*}
 %
 L'\'equation $\nabla^2 f(\bar{x})d_N=-\nabla f(\bar{x})$ est appel\'ee \'equation de Newton et $d_N$ direction de Newton.
-En supposant que la matrice $\nabla^2f(x)$ est d\'efinie positive et donc inversible, la 
+En supposant que la matrice $\nabla^2f(x)$ est d\'efinie positive et donc inversible, la
 solution revient \`a trouver le minimum du mod\`ele quadratique de la fonction en $x_k$, d'o\`u :
 \begin{equation*}
 x_{k+1}=\arg\min_{x\in\mathbb{R}^n} q_{x_k}(x)
 \end{equation*}
-La solution peut s'\'ecrire 
+La solution peut s'\'ecrire
 \begin{equation*}
 x_{k+1}\leftarrow x_k\underbrace{-\nabla F(x_k)^{-1}F(x_k)}_{d_N}
 \end{equation*}
 \begin{equation*}
 \text{o\`u } d_N=-\nabla^2f(x)^{-1}\nabla f(x)^T.
 \end{equation*}
-% Cette direction correspond \`a la direction de Newton et elle intervient dans la 
+% Cette direction correspond \`a la direction de Newton et elle intervient dans la
 % r\'esolution de syst\`emes d'\'equations non lin\'eaires. En notant
-%  $F : \mathbb{R}^n \rightarrow \mathbb{R}^n$ le gradient de $f$, on recherche ses z\'eros. 
+%  $F : \mathbb{R}^n \rightarrow \mathbb{R}^n$ le gradient de $f$, on recherche ses z\'eros.
 % $$x_{k+1}\leftarrow x_k\underbrace{-\nabla F(x_k)^{-1}F(x_k)}_{d_N}$$
 % Cela revient au même de consid\'erer la fonction $F:\mathbb{R}^n\rightarrow \mathbb{R}^n$; c'est comme s'il y avait
 % $n$ syst\`emes et $\nabla F(\bar{x})$ correspond au hessien.
-% 
-% 
-% 
-% 
 %
-L'id\'eal est de commencer \`a partir d'une approximation de $x^*$, notre minimum local; nommons le $x_0$. 
-On calcule d'abord le mod\`ele quadratique en $x_0$ pour obtenir son minimum $x_1$. 
+%
+%
+%
+%
+L'id\'eal est de commencer \`a partir d'une approximation de $x^*$, notre minimum local; nommons le $x_0$.
+On calcule d'abord le mod\`ele quadratique en $x_0$ pour obtenir son minimum $x_1$.
 Si les conditions d'optimalit\'e sont satisfaites alors l'algorithme s'arrête, sinon on recalcule l'approximation
 quadratique en $x_1$.
-% En posant $d=x-x^*$, si on veut satisfaire la condition n\'ecessaire du premier ordre il faut que : 
+% En posant $d=x-x^*$, si on veut satisfaire la condition n\'ecessaire du premier ordre il faut que :
 % \begin{equation}
 % l_{x^*}(x+d_N)=F(x^*)+\nabla F(x^*)d=0
 % \end{equation}
@@ -283,7 +277,7 @@ quadratique en $x_1$.
 \label{fig:Newton}
 \end{figure}
 %
-Dans le cas unidimensionnel, avec plusieurs exp\'erimentations, nous pouvons constater que 
+Dans le cas unidimensionnel, avec plusieurs exp\'erimentations, nous pouvons constater que
 la m\'ethode de Newton converge tr\`es vite lorsque
 \begin{itemize}
 \item la fonction n'est pas trop non lin\'eaire c'est-\`a-dire que les variations de la fonction ne sont pas trop grandes
@@ -297,8 +291,8 @@ Si une de ces conditions n'est pas satisfaite, il se peut que l'algorithme diver
 
 
 
-Fourier \cite{convnewton} a d\'emontr\'e la convergence quadratique locale dans le cas r\'eel mais 
-le th\'eor\`eme de Kantorovich nous assure la convergence sous certaines conditions dans le 
+Fourier \cite{convnewton} a d\'emontr\'e la convergence quadratique locale dans le cas r\'eel mais
+le th\'eor\`eme de Kantorovich nous assure la convergence sous certaines conditions dans le
 voisinage de $x_0$. De plus, il donne une borne de l'erreur pour chaque it\'er\'e.
 
 \begin{frtheoreme}(Kantorovich \cite{Kantorovich})
@@ -315,27 +309,27 @@ $$\lVert x_*-x_k \rVert \leq \frac{\eta}{h}\left(\frac{(1-\sqrt{1-2h})^{2^k}}{2^
 \end{frtheoreme}
 
 
-Un th\'eor\`eme de convergence pour une m\'ethode it\'erative est appel\'e un th\'eor\`eme de convergence 
-locale lorsque l'on suppose l'existence d'une solution $x^*$ et le point initial $x_0$ est 
+Un th\'eor\`eme de convergence pour une m\'ethode it\'erative est appel\'e un th\'eor\`eme de convergence
+locale lorsque l'on suppose l'existence d'une solution $x^*$ et le point initial $x_0$ est
 suffisamment proche de $x^*$. D'autre part, un th\'eor\`eme de convergence tel que \ref{th:Kantorovich},
 qui ne suppose pas l'existence d'une solution mais suppose certaines conditions sur $x_0$ est
 appel\'e une th\'eor\`eme de convergence semi-locale.\\
 
 Sans appliquer les conditions des d\'efinitions \ref{def:2} et \ref{def:3}, l'algorithme de Newton
-a une convergence locale et semi-locale. 
+a une convergence locale et semi-locale.
 
 
 
 \subsection{Ordre de convergence}
-Pour pouvoir comparer les algorithmes, nous d\'efinissons la vitesse de convergence qui 
+Pour pouvoir comparer les algorithmes, nous d\'efinissons la vitesse de convergence qui
 est le t\'emoin th\'eorique de l'efficacit\'e de la m\'ethode.
 
 \begin{frdefinition}
 \label{def:convergence}
-La vitesse de convergence de la suite $\{x_k\}$ vers le point $x_*$, telle que $\forall k,\ x_k \neq x^*$ s'exprime 
+La vitesse de convergence de la suite $\{x_k\}$ vers le point $x_*$, telle que $\forall k,\ x_k \neq x^*$ s'exprime
 \`a l'aide des scalaires $p$ et $\gamma$ dans l'expression suivante:
 $$\lim \sup_{k\rightarrow \infty}\frac{\lvert x_{k+1}-x^*\rvert}{\lvert x_k-x^* \rvert^p}=\gamma< \infty $$
-L'ordre de convergence de la suite est donn\'e par la plus grande valeur que p puisse prendre pour que la limite 
+L'ordre de convergence de la suite est donn\'e par la plus grande valeur que p puisse prendre pour que la limite
 ci-haut demeure finie. Lorsque p=1, $\gamma$ est nomm\'ee le taux de convergence.
 \end{frdefinition}
 
@@ -343,33 +337,33 @@ Le cas o\`u $p=1$ est dite convergence lin\'eaire, le cas $p=2$, convergence qua
 est \'elev\'ee et plus la m\'ethode sera efficace.
 
 \begin{frtheoreme}
-Soit $x^*$ une racine isol\'ee de la fonction $g$ telle que $g'(x^*)\neq 0$, avec la fonction $g'$ Lipschitzienne, 
- Alors, il existe un voisinage de $x^*$ tel que si la m\'ethode de Newton 
-est initialis\'ee dans ce voisinage, elle produit une suite convergeant vers $x^*$ et la vitesse de convergence 
+Soit $x^*$ une racine isol\'ee de la fonction $g$ telle que $g'(x^*)\neq 0$, avec la fonction $g'$ Lipschitzienne,
+ Alors, il existe un voisinage de $x^*$ tel que si la m\'ethode de Newton
+est initialis\'ee dans ce voisinage, elle produit une suite convergeant vers $x^*$ et la vitesse de convergence
 asymptotique est quadratique.
 \end{frtheoreme}
 
 
 La condition pour que $x_0$ soit proche de la solution se traduit par la convergence locale, c'est-\`a-dire que $x_0$ doit
 être choisi dans un certain voisinage de la solution.
-Le fait que la fonction ne soit pas trop non lin\'eaire correspond au caract\`ere lipschitzien 
+Le fait que la fonction ne soit pas trop non lin\'eaire correspond au caract\`ere lipschitzien
 de la fonction. Par exemple, l'algorithme de Newton aura beaucoup de mal \`a trouver le z\'ero de l'\'equation
 $\frac{1}{x}-C$ o\`u $C$ est une constante positive, si l'on part d'un point $x_0$ proche de z\'ero.
- Enfin, le th\'eor\`eme de Kantorovich suppose que $F(x_0)^{-1}$ existe. Pour un 
+ Enfin, le th\'eor\`eme de Kantorovich suppose que $F(x_0)^{-1}$ existe. Pour un
 ordinateur il faudrait que $\lVert F(x_0)^{-1}\rVert \geq \epsilon>0$ \`a cause des erreurs
 d'arrondis et d'annulation.
 
-La direction $d_N$ est suffisamment descendante si la matrice $\nabla^2 f(x)$ est d\'efinie positive. Dans le 
-cas contraire, la suite $\{x_k\}_k$ peut diverger, c'est pour cela que cette matrice va être modifi\'ee pour 
+La direction $d_N$ est suffisamment descendante si la matrice $\nabla^2 f(x)$ est d\'efinie positive. Dans le
+cas contraire, la suite $\{x_k\}_k$ peut diverger, c'est pour cela que cette matrice va être modifi\'ee pour
 devenir d\'efinie positive.
 
 \subsection{It\'eration de Newton modifi\'ee}
 
 Dans le but de satisfaire les conditions pour la m\'ethode de descente, il faut modifier la direction $d_N$.
- Sinon, la m\'ethode peut ne plus être globalement convergente. 
+ Sinon, la m\'ethode peut ne plus être globalement convergente.
 De la même mani\`ere, on consid\`ere l'approximation d'ordre deux pour trouver le minimum de $f$ sauf qu'au lieu
 d'avoir la matrice hessienne, nous avons une modification : $B_k$
-$$f(x_k+d)=f(x_k)+\nabla f(x_k)d+\frac{1}{2}d^TB_kd$$ 
+$$f(x_k+d)=f(x_k)+\nabla f(x_k)d+\frac{1}{2}d^TB_kd$$
 o\`u $B_k\simeq \nabla^2f(x)$. On va chercher le probl\`eme d'optimisation par rapport \`a la direction $d$ :
 $$\min_d\nabla f(x_k)d+\frac{1}{2}d^TB_kd.$$
 En d\'erivant par rapport \`a $d$, la condition n\'ecessaire du premier ordre fournit la relation :
@@ -381,10 +375,10 @@ o\`u $\lambda_{min}$ est la plus petite valeur propre de $\nabla^2 f(x_k)$ et $\
 
 
 L'inconv\'enient de cette formule est dans le calcul de $\lambda_{min}$, il faut avoir l'ensemble des valeurs propres de
-la matrice et ce calcul a une complexit\'e en $\mathcal{O}(n^3)$ avec une constante implicite plutôt d\'efavorable. 
+la matrice et ce calcul a une complexit\'e en $\mathcal{O}(n^3)$ avec une constante implicite plutôt d\'efavorable.
 Nous allons directement nous aider de la d\'ecomposition de Cholesky pour modifier la diagonale. Ainsi, on esp\`ere avoir
 une complexit\'e totale inf\'erieure.
-% Pour cela, nous utiliserons une d\'ecomposition de Cholesky modifi\'ee pour que toutes les 
+% Pour cela, nous utiliserons une d\'ecomposition de Cholesky modifi\'ee pour que toutes les
 % valeurs propres soient strictement positives.
 
 % Convergence locale quadratique
@@ -395,14 +389,14 @@ une complexit\'e totale inf\'erieure.
 \section{R\'esolution de syst\`eme lin\'eaire}
 \`A chaque it\'eration de Newton, il faut r\'esoudre $\nabla^2 f(x)d_N=\nabla f(x)^T$\\ o\`u $\nabla^2 f(x^*)\in \mathbb{R}^{n\times n}$
  est une matrice sym\'etrique et $\nabla f(x)^T \in \mathbb{R}^n$.
-Il s'agit donc d'un syst\`eme lin\'eaire de la forme $Ax=b$ de grande taille. Il n'est pas envisageable 
+Il s'agit donc d'un syst\`eme lin\'eaire de la forme $Ax=b$ de grande taille. Il n'est pas envisageable
 d'adopter une r\'esolution du type Cramer, pour que ce soit efficace, nous devons
  modifier la matrice $A$, il existe plusieurs d\'ecompositions:
 \subsection{Qu'existe-il?}
 \begin{description}
   \item[\'Elimination de Gauss-Jordan] \hfill \\
 Aussi appel\'e pivot de Gauss, elle s'applique sur une matrice $A \in \mathbb{R}^{n\times n}$ non singuli\`ere.
- La strat\'egie est de r\'eduire gr\^ace aux op\'erations \'el\'ementaires sur les colonnes de $A$ pour obtenir une matrice triangulaire sup\'erieure. 
+ La strat\'egie est de r\'eduire gr\^ace aux op\'erations \'el\'ementaires sur les colonnes de $A$ pour obtenir une matrice triangulaire sup\'erieure.
 Il y a $n-1$ \'etapes, premi\`erement, $A^{(1)}\leftarrow A$ et $b^{(1)}\leftarrow b$ sont initialis\'es. Au bout
 de la $k$i\`eme \'etape, nous avons $A^{(k)}x=b^{(k)}$ %o\`u
 $$A^{(k)}= \left[
@@ -440,17 +434,17 @@ triangulaire inf\'erieure et inversible, telle que
 \begin{algorithm}                     % enter the algorithm environment
 \caption{Factorisation de Cholesky}          % give the algorithm a caption
 \label{alg:chol}                           % and a label for \ref{} commands later in the document
-\begin{algorithmic}  
-\STATE \textbf{Pr\'ealables:} %Variables en entr\'ee :  
+\begin{algorithmic}
+\STATE \textbf{Pr\'ealables:} %Variables en entr\'ee :
 \begin{itemize}
 \item[$\bullet$] Soit $A \in \mathbb{R}^{n\times n}$ une matrice sym\'etrique d\'efinie positive
 \end{itemize}
-\STATE \textbf{En sortie:} %Variables en entr\'ee :  
+\STATE \textbf{En sortie:} %Variables en entr\'ee :
 \begin{itemize}
 \item[$\bullet$] calcule $R$ o\`u $A=R^TR$ et $R=(r_{ij})_{1\leq i,j\leq n}$
 \end{itemize}
-\FOR{$j = 1:n$} 
-\FOR{$i = 1:n$} 
+\FOR{$j = 1:n$}
+\FOR{$i = 1:n$}
 \STATE $r_{ij}\leftarrow(a_{ij}-\sum_{k=1}^{i-1}r_{ki}r_{kj})/r_{ii}$
 \ENDFOR
 \STATE $r_{jj}=(a_{jj}-\sum_{k=1}^{j-1}r_{kj}^2)^{1/2}$
@@ -460,9 +454,9 @@ triangulaire inf\'erieure et inversible, telle que
 
 
 Pour r\'esoudre le syst\`eme, $Ax = LL^Tx = b$, on commence par r\'esoudre $Ly=b$ puis $L^Tx=y$.
-Le nombre d'op\'erations requis pour cette d\'ecomposition est de l'ordre de $\frac{1}{3}n^3$. Il s'agit de la m\'ethode 
+Le nombre d'op\'erations requis pour cette d\'ecomposition est de l'ordre de $\frac{1}{3}n^3$. Il s'agit de la m\'ethode
 la plus efficace donc celle que l'on devrait utiliser, cependant lorsque la m\'ethode de Newton est appliqu\'ee,
-la matrice hessienne n'est a priori pas d\'efinie positive. C'est pour cette raison que l'algorithme de Cholesky a \'et\'e 
+la matrice hessienne n'est a priori pas d\'efinie positive. C'est pour cette raison que l'algorithme de Cholesky a \'et\'e
 modifi\'e. La matrice va être corrig\'ee pour obtenir une d\'ecomposition d\'efinie positive
  et plutôt bien conditionn\'ee.
 \end{description}
@@ -473,18 +467,18 @@ modifi\'e. La matrice va être corrig\'ee pour obtenir une d\'ecomposition d\'ef
 
 Soit une matrice $A$, sym\'etrique mais pas n\'ecessairement d\'efinie positive. L'algorithme de Cholesky modifi\'ee
 calcule la d\'ecomposition $P(A+E)P^T=LDL^T$ o\`u $P$ est une matrice de permutation, $E$ est une
-perturbation pour rendre la matrice $A+E$ d\'efinie positive, $D$ est une matrice diagonale et 
-$L$ une matrice triangulaire inf\'erieure. La norme de $E$ devrait être petite et $A+E$ 
-bien conditionn\'ee. Cette technique est largement utilis\'ee en optimisation comme dans notre cas ou bien pour 
+perturbation pour rendre la matrice $A+E$ d\'efinie positive, $D$ est une matrice diagonale et
+$L$ une matrice triangulaire inf\'erieure. La norme de $E$ devrait être petite et $A+E$
+bien conditionn\'ee. Cette technique est largement utilis\'ee en optimisation comme dans notre cas ou bien pour
 calculer des pr\'e-conditionneurs d\'efinis positifs.
 Comme le soulignent Cheng et Higham dans \cite{Higham}, les objectifs de l'algorithme de Cholesky modifi\'e peuvent être d\'eclar\'es
 comme suit :
 \begin{itemize}
 \item[O1] Si $A$ est "suffisamment d\'efinie positive", alors $E$ devrait être \'egale \`a z\'ero.
-\item[O2] Si $A$ est ind\'efinie, $\lVert E \rVert$ ne devrait pas être plus grand que 
+\item[O2] Si $A$ est ind\'efinie, $\lVert E \rVert$ ne devrait pas être plus grand que
 \[\min\{\lVert \Delta A \rVert: A+\Delta A \text{ est d\'efinie positive } \} \]
 pour une norme appropri\'ee.
-\item[O3] La matrice $A+E$ devrait être raisonnablement bien conditionn\'ee. 
+\item[O3] La matrice $A+E$ devrait être raisonnablement bien conditionn\'ee.
 \item[O4] Le coût de l'algorithme devrait être le même que le coût de la d\'ecomposition standard de Cholesky
  pour l'ordre le plus \'elev\'e.
 \end{itemize}
@@ -498,7 +492,7 @@ pour une norme appropri\'ee.
 
 
 % \section{R\'egion de confiance}
-% Une autre technique qui nous permet de ne pas trop s'\'ecarter du point courant est la m\'ethode par r\'egion de confiance. La zone de 
+% Une autre technique qui nous permet de ne pas trop s'\'ecarter du point courant est la m\'ethode par r\'egion de confiance. La zone de
 % confiance, de laquelle on ne va pas pouvoir s'\'ecarter va être d\'etermin\'ee par approximation quadratique de la fonction. Si cette
 % approximation est trop erron\'ee, la zone devra être r\'eduite, sinon, nous l'augmenterons.\\
 
@@ -518,7 +512,7 @@ Cauchy a d\'emontr\'e sous certaines conditions la convergence semi-locale cubiq
 En effectuant le d\'eveloppement de Taylor limit\'e $\sqrt{1-x}\simeq 1-\frac{1}{2}x $, on obtient la m\'ethode de Halley (1694):
 $$x_{k+1}=x_k-[\nabla F(x_k)-\frac{1}{2}\nabla^2F(x_k)\nabla F(x_k)^{-1}F(x_k)]^{-1}F(x_k)$$
 %
-Cela revient \`a r\'esoudre les diff\'erents syst\`emes : 
+Cela revient \`a r\'esoudre les diff\'erents syst\`emes :
 $$F(x_k)+\nabla F(x_k)c_k=0 \Leftrightarrow c_k=-\nabla F(x_k)^{-1}F(x_k)$$
 $$F(x_k)+\nabla F(x_k)d_k+\frac{1}{2}\nabla^2F(x_k)c_kd_k=0  \Leftrightarrow  d_k=-[\nabla F(x_k)-\frac{1}{2}\nabla^2F(x_k)c_k]^{-1}F(x_k)$$
 $$x_{k+1}=x_k+d_k, 0\leq k$$
@@ -548,21 +542,21 @@ $$x_{k+1}=x_k+d_k, 0\leq k$$
 %  comme suit:\\
 
 Les m\'ethodes pr\'esent\'ees peuvent être r\'esum\'ees comme suit. Soit $F$ une fonction de $\mathbb{R}^n$
-dans $\mathbb{R}^n$. Chaque m\'ethode est vue comme une direction de d\'eplacement avec laquelle une 
+dans $\mathbb{R}^n$. Chaque m\'ethode est vue comme une direction de d\'eplacement avec laquelle une
 suite d'it\'er\'es est construit \[x_{k+1}=x_k+d_k\]
-La condition n\'ecessaire du premier ordre doit être satisfaite, on cherche $x^*$ tel que 
+La condition n\'ecessaire du premier ordre doit être satisfaite, on cherche $x^*$ tel que
 \[F(x^*)=0\]
-La m\'ethode de Newton revient \`a r\'esoudre le syst\`eme : 
+La m\'ethode de Newton revient \`a r\'esoudre le syst\`eme :
 \[F(x)+\nabla F(x)d_N=0.\]
-Celle de Halley revient \`a faire : 
+Celle de Halley revient \`a faire :
 \[F(x)+\nabla F(x) d_H+\frac{1}{2} \nabla^2 F(x)d_N d_H=0.\]
 Et celle de Chebychev :
 \[F(x)+\nabla F(x) d_C+\frac{1}{2}\nabla^2 F(x)d_Nd_N=0.\]
 %
 %
-% \red 
+% \red
 \`A partir de ces directions de Halley, Newton et Chebyshev, d'apr\`es \cite{Kchouk}, on peut d\'evelopper de nouvelles m\'ethodes sur le même plan
-mais \`a un ordre sup\'erieur : 
+mais \`a un ordre sup\'erieur :
 
 \begin{equation}
  F(x)+\nabla F(x)d+\frac{1}{2}\nabla^2 F(x){
@@ -584,7 +578,7 @@ o\`u la direction recherch\'ee est $d$ et les directions $d_i$ sont des directio
 
 
 
-Les m\'ethodes qui viennent d'être pr\'esent\'ees ne sont pas universelles et souffrent des 
+Les m\'ethodes qui viennent d'être pr\'esent\'ees ne sont pas universelles et souffrent des
 mêmes d\'efauts que la m\'ethode de Newton \`a savoir que la convergence est seulement locale et les fonctions
 doivent être lipschitziennes. Comme la plupart des algorithmes en optimisation, il
 n'existe pas de m\'ethode meilleure que toutes. Dans certains cas de figure, les m\'ethodes qui sont a priori
@@ -593,7 +587,7 @@ moins efficaces ; c'est-\`a-dire de moins bonne convergence, peuvent r\'esoudre 
 
 \section{Ordre de la complexit\'e}
 \label{chap1:ordre}
-Une borne th\'eorique de la complexit\'e bien connue est celle de Griewank \cite{Iri89onautomatic}, qui \'enonce que 
+Une borne th\'eorique de la complexit\'e bien connue est celle de Griewank \cite{Iri89onautomatic}, qui \'enonce que
 le coût d'\'evaluation du gradient n\'ecessite jamais plus cinq fois le coût de l'\'evaluation
 de la fonction en mode inverse et $n$ fois le coût de l'\'evaluation en mode direct.
 Par ailleurs, Mihael Ulbrich et Stephan Ulbrich \cite{Ulbrich} donnent des bornes plus pr\'ecises sur les deux modes tangent et direct
@@ -615,13 +609,13 @@ En revanche, avec le mode inverse la borne de complexit\'e, dûe \`a W. Baur et 
 \end{equation*}
 
 
-En r\'ealit\'e, dans beaucoup de cas, nous avons besoin du calcul du gradient multipli\'e par un vecteur ou de la hessienne multipli\'ee par un vecteur, ce qui va simplifier la 
+En r\'ealit\'e, dans beaucoup de cas, nous avons besoin du calcul du gradient multipli\'e par un vecteur ou de la hessienne multipli\'ee par un vecteur, ce qui va simplifier la
 complexit\'e avec la DA.
 Bien qu'il y ait une remarque sur l'op\'eration $\nabla^2 f.d $, M. et S. Ulbrich ne donnent pas de borne pr\'ecise pour cette op\'eration.
 Quand on applique le mode direct dans une certaine direction, le coût est proportionnel au coût de $f$. En g\'en\'eralisant aux d\'erivations
-sup\'erieures, les op\'erations $\nabla^3 f\cdot u \cdot v$ et $\nabla^4 f\cdot u \cdot v \cdot w$ ne d\'ependent pas de $n$. Ce qui est 
+sup\'erieures, les op\'erations $\nabla^3 f\cdot u \cdot v$ et $\nabla^4 f\cdot u \cdot v \cdot w$ ne d\'ependent pas de $n$. Ce qui est
 le plus surprenant dans le tableau c'est qu'il est possible d'obtenir le gradient qui est de dimension $n$ \`a un coût proportionnel \`a
-la fonction. Intuitivement, on pourrait croire qu'il est possible d'obtenir de la même mani\`ere les hessiens et ordres plus \'elev\'es avec 
+la fonction. Intuitivement, on pourrait croire qu'il est possible d'obtenir de la même mani\`ere les hessiens et ordres plus \'elev\'es avec
 le même coût. En r\'ealit\'e, nous verrons que ce r\'esutlat ne peux pas s'obtenir avec une certaine contrainte de stockage.
 
 \begin{center}
@@ -664,15 +658,15 @@ la matrice $\nabla^2 f(x)$ est carr\'ee et sym\'etrique puisque
  \begin{align*}
 \left[\nabla^2 f(x)\right]_{ij} & =\frac{\partial^2 f(x)}{\partial x_i \partial x_j} \\
 				& = \frac{\partial^2 f(x)}{\partial x_j \partial x_i} \\
-				& = \left[\nabla^2 f(x)\right]_{ji} 
+				& = \left[\nabla^2 f(x)\right]_{ji}
 \end{align*}
 
 
 \begin{algorithm}%[h]                     % enter the algorithm environment
 \caption{Direction de Newton modifi\'ee}          % give the algorithm a caption
 \label{alg:2}                           % and a label for \ref{} commands later in the document
-\begin{algorithmic}  
-\STATE \textbf{Pr\'ealables:} %Variables en entr\'ee :  
+\begin{algorithmic}
+\STATE \textbf{Pr\'ealables:} %Variables en entr\'ee :
 \begin{itemize}
 \item[$\bullet$] $\nabla f(x)\in \mathbb{R}^n$ le gradient en $x$
 \item[$\bullet$] $\nabla^2 f(x)\in \mathbb{R}^{n\times n}$ le hessien en $x$
@@ -684,19 +678,19 @@ la matrice $\nabla^2 f(x)$ est carr\'ee et sym\'etrique puisque
 \STATE $A,P \leftarrow $ d\'ecomposition de $H$
 \COMMENT{$P$ \'etant la matrice de permutation}
 \STATE $A' \leftarrow$ modification de la diagonale de $A$
-\STATE $d_N \leftarrow$ r\'esolution($A',\ P,\ g)$ 
+\STATE $d_N \leftarrow$ r\'esolution($A',\ P,\ g)$
 \COMMENT{R\'esolution du syst\`eme $A^{''}x=g$ o\`u $A^{''}$ est la matrice $A'$ avec les bonnes permutations}
 
 %[R\'esolution du syst\`eme $A^{''}x=g$ o\`u $A^{''}$ est la matrice $A'$ avec les bonnes permutations]
 
-\STATE $r\leftarrow (d_N,A',P)$ 
+\STATE $r\leftarrow (d_N,A',P)$
 \COMMENT{On retourne la direction mais aussi la
  d\'ecomposition et la permutation que l'on pourra r\'eutiliser par la suite}
 \end{algorithmic}
 \end{algorithm}
 
 
-% Le nombre d'addition requis pour cette d\'ecomposition est $\frac{1}{6}n^3+\frac{3}{2}n^2$ et  $\frac{1}{6}n^3+n^2$ 
+% Le nombre d'addition requis pour cette d\'ecomposition est $\frac{1}{6}n^3+\frac{3}{2}n^2$ et  $\frac{1}{6}n^3+n^2$
 
 % \begin{verbatim}
 % function [d,g,h,ABmod,Ipiv]= Dn(x,n,m)
@@ -725,19 +719,19 @@ la matrice $\nabla^2 f(x)$ est carr\'ee et sym\'etrique puisque
 % $x^* \in [x_k, \ x_k+2\sigma_k] $, o\`u $\sigma_k =-f(x_k)/f'(x_k)=k_{k+1}-x_k$, et ainsi \\
 % $\lvert x^*-x_k \lvert \leq 2\x_{k+1}-x_k\rvert$ ($k\geq 0$)\\
 % $\leq \frac{K}{m}\lvert x_k-x_{k-1}\rvert^2 (k\geq 1)$ \\
-% $\leq 2\eta\left( \frac{K\eta}{2m} \right)^{2k-1} (k\geq 0)$ 
+% $\leq 2\eta\left( \frac{K\eta}{2m} \right)^{2k-1} (k\geq 0)$
 % \end{frtheoreme}
 \noindent
 L'algorithme \ref{alg:2} r\'esume les \'etapes du calcul de la direction de Newton modifi\'ee.
-La matrice $\nabla^2 f(x)$ est factoris\'ee pour pouvoir r\'eutiliser la d\'ecomposition. 
+La matrice $\nabla^2 f(x)$ est factoris\'ee pour pouvoir r\'eutiliser la d\'ecomposition.
 $P$ est un vecteur qui contient les informations sur les permutations \`a faire et la matrice $A$ est
 modifi\'ee pour obtenir une direction de descente lorsque la matrice n'est pas d\'efinie positive.
-Pour chaque calcul de la direction en $x$ les op\'erations sont 
+Pour chaque calcul de la direction en $x$ les op\'erations sont
 \begin{itemize}
 \item Calcul du hessien $\nabla^2 f(x)$
 \item Factorisation $LDL^T=PAP^T$
 \item Changement de la diagonale $D'=D+\Tilde{D}$
-\item R\'esolution de syst\`emes triangulaires $Lx=b$ 
+\item R\'esolution de syst\`emes triangulaires $Lx=b$
 \end{itemize}
 
 Ce qui a un comportement en $\frac{n^3}{3}+n^2$ et la convergence est quadratique.
@@ -745,14 +739,14 @@ Ce qui a un comportement en $\frac{n^3}{3}+n^2$ et la convergence est quadratiqu
 
 \subsection{Chebychev}
 
-Pour calculer la direction de Chebychev $d_C$, on va r\'eutiliser le calcul 
+Pour calculer la direction de Chebychev $d_C$, on va r\'eutiliser le calcul
 de la direction de Newton qui apparaît plusieurs fois dans l'\'equation \eqref{equ:cheb}. %ligne 505
 
 \begin{algorithm}                     % enter the algorithm environment
 \caption{Direction de Chebychev}          % give the algorithm a caption
 \label{alg:3}                           % and a label for \ref{} commands later in the document
-\begin{algorithmic}  
-\STATE \textbf{Pr\'ealables:} %Variables en entr\'ee :  
+\begin{algorithmic}
+\STATE \textbf{Pr\'ealables:} %Variables en entr\'ee :
 \begin{itemize}
 \item[$\bullet$] $\nabla f(x)\in \mathbb{R}^n$ le gradient en $x$
 \item[$\bullet$] $\nabla^2 f(x)\in \mathbb{R}^{n\times n}$ le hessien en $x$
@@ -765,7 +759,7 @@ de deux vecteurs quelconques $u$ et $v$
 
 \STATE \textbf{Variable en sortie :} $d_C$
 \STATE $w \leftarrow \nabla^3 f(x) \cdot d_N \cdot d_N = g(d_N,d_N)$
-\STATE $d \leftarrow$ r\'esolution($A',\ P,\ w)$ 
+\STATE $d \leftarrow$ r\'esolution($A',\ P,\ w)$
 \STATE $d_C \leftarrow d_N-\frac{1}{2}d$
 \end{algorithmic}
 \end{algorithm}
@@ -778,7 +772,7 @@ Pour chaque calcul de la direction de Chebychev :
 \begin{itemize}
 \item Calcul de la direction de Newton : l'algorithme r\'eutilise les valeurs calcul\'ees dans l'algorithme de Newton.
 \item $\nabla^3 f(x)\cdot d\cdot d$
-\item R\'esolution de syst\`emes triangulaires $Lx=b$ 
+\item R\'esolution de syst\`emes triangulaires $Lx=b$
 \end{itemize}
 
 La complexit\'e de la direction de Chebychev est de l'ordre de $\frac{n^3}{3}+(2+C)n^2$ et la m\'ethode a une convergence cubique.
@@ -788,14 +782,14 @@ La complexit\'e de la direction de Chebychev est de l'ordre de $\frac{n^3}{3}+(2
 
 \subsection{Halley}
 
-Pour calculer la direction de Halley $d_H$, on va r\'eutiliser le calcul 
+Pour calculer la direction de Halley $d_H$, on va r\'eutiliser le calcul
 de la direction de Chebychev et de Newton. %Voir l'algorithme \ref{alg:4}
 
 \begin{algorithm}                     % enter the algorithm environment
 \caption{Direction de Halley}          % give the algorithm a caption
 \label{alg:4}                           % and a label for \ref{} commands later in the document
-\begin{algorithmic}  
-\STATE \textbf{Pr\'ealables:} %Variables en entr\'ee :  
+\begin{algorithmic}
+\STATE \textbf{Pr\'ealables:} %Variables en entr\'ee :
 \begin{itemize}
 \item[$\bullet$] $\nabla f(x)\in \mathbb{R}^n$ le gradient en $x$
 \item[$\bullet$] $\nabla^2 f(x)\in \mathbb{R}^{n\times n}$ le hessien en $x$
@@ -811,7 +805,7 @@ de la direction de Chebychev et de Newton. %Voir l'algorithme \ref{alg:4}
 \STATE \textbf{Variable en sortie :} $d_C$
 \STATE $A \leftarrow \nabla^3 f(x) \cdot d_N$
 \STATE $M \leftarrow \frac{1}{2}A+\nabla^2 f(x)$
-\STATE $d_H \leftarrow$ r\'esolution($Md_H=\nabla f(x)^T)$ 
+\STATE $d_H \leftarrow$ r\'esolution($Md_H=\nabla f(x)^T)$
 \end{algorithmic}
 \end{algorithm}
 
@@ -822,14 +816,14 @@ de la direction de Chebychev et de Newton. %Voir l'algorithme \ref{alg:4}
 \item $\nabla^3 f(x)\cdot v$
 \item D\'ecomposition de Cholesky modifi\'ee
 \item Changement de la diagonale
-\item R\'esolution de syst\`emes triangulaires $Lx=b$ 
+\item R\'esolution de syst\`emes triangulaires $Lx=b$
 \end{itemize}
 
 
 
 Soit un coût de $\frac{2}{3}n^3+(2+C+D)n^2$ o\`u $C$ et $D$ sont des constantes d\'ependantes de l'efficacit\'e du logiciel de DA.
 Pour rappel, cette m\'ethode a une convergence cubique.
-Pour bien comprendre la difficult\'e, pour effectuer cette m\'ethode, il faut être capable de calculer $\nabla^3 f(x)\cdot d$ pour une 
+Pour bien comprendre la difficult\'e, pour effectuer cette m\'ethode, il faut être capable de calculer $\nabla^3 f(x)\cdot d$ pour une
 certaine direction $d$.
 
 
@@ -841,11 +835,11 @@ certaine direction $d$.
 \begin{algorithm}                     % enter the algorithm environment
 \caption{Direction d'extrapolation d'odre trois}          % give the algorithm a caption
 \label{alg:3}                           % and a label for \ref{} commands later in the document
-\begin{algorithmic}  
-\STATE \textbf{Pr\'ealables:} %Variables en entr\'ee :  
+\begin{algorithmic}
+\STATE \textbf{Pr\'ealables:} %Variables en entr\'ee :
 \begin{itemize}
 \item[$\bullet$] $(d_N,A',P)\leftarrow$ Direction de Newton
-\item[$\bullet$] $d_C \leftarrow$ Direction de Cheychev 
+\item[$\bullet$] $d_C \leftarrow$ Direction de Cheychev
 \item[$\bullet$] La fonction $g: u,\ v \mapsto \nabla^3 f(x)\cdot u\cdot v$ qui fait le calcul en fonction
 de deux vecteurs quelconque $u$ et $v$
 \item[$\bullet$] La fonction $h: u,\ v,\ w \mapsto \nabla^4 f(x)\cdot u\cdot v\cdot w$
@@ -853,9 +847,9 @@ de deux vecteurs quelconque $u$ et $v$
 \STATE \textbf{Variable en sortie :} $d_3$
 \STATE $d \leftarrow 2d_C-d_N$
 \STATE $v \leftarrow$ $\nabla^3 f(x).d.d_N$
-\STATE $w\leftarrow$ r\'esolution($A',\ P,\ v)$ 
+\STATE $w\leftarrow$ r\'esolution($A',\ P,\ v)$
 \STATE $z\leftarrow\nabla^4 f(x).d_N^3=h(d_N,d_N,d_N)$
-\STATE $t\leftarrow$ r\'esolution($A',\ P,\ z)$ 
+\STATE $t\leftarrow$ r\'esolution($A',\ P,\ z)$
 \STATE $d_3 \leftarrow d_N-\frac{1}{2}w-\frac{1}{6}t$
 \end{algorithmic}
 \end{algorithm}
@@ -867,7 +861,7 @@ Les op\'erations requises sont :
 \item Calcul de la direction de Chebychev et donc celle de Newton
 \item $\nabla^3 f(x)\cdot d\cdot d$
 \item $\nabla^4 f(x)\cdot d\cdot d\cdot d$
-\item Deux r\'esolutions de syst\`emes triangulaires $Lx=b$ 
+\item Deux r\'esolutions de syst\`emes triangulaires $Lx=b$
 \end{itemize}
 
 Le coût total est de l'ordre de $\frac{1}{3}n^3 +(3+C+E)n^2$ o\`u $C$ et $E$ vont d\'ependre de l'outil de DA et avec une convergence
@@ -891,8 +885,8 @@ Extrapolation d'ordre 3 & $\frac{1}{3}n^3 +(2+C+E)n^2$  & quartique \\
 
 
 \noindent
-Ainsi, on peut observer que pour le même ordre de complexit\'e, la convergence de l'algorithme de 
-Chebychev est meilleure que celle de Newton. Si nous arrivons \`a atteindre les bornes th\'eoriques des calculs, la m\'ethode 
+Ainsi, on peut observer que pour le même ordre de complexit\'e, la convergence de l'algorithme de
+Chebychev est meilleure que celle de Newton. Si nous arrivons \`a atteindre les bornes th\'eoriques des calculs, la m\'ethode
 de Chebychev devrait prendre moins de temps d'ex\'ecution surtout pour des dimensions plus \'elev\'ees pour att\'enuer la constante $C$.
 De plus, il va être int\'eressant de comparer les m\'ethodes classiques avec l'extrapolation d'ordre trois puisqu'elle a une meilleure
 convergence.
@@ -905,8 +899,8 @@ convergence.
 
 Comme beaucoup de tests en optimisation furent insuffisants et pas toujours r\'ev\'elateurs, Mor\'e, Garbow et Hillstrom
 ont cr\'e\'e une banque de fonctions dans le but de tester des algorithmes d'optimisation sans contraintes.
- Nous savons que le point initial a une importance primordiale dans l'algorithme, pour cette raison, ils ont choisi de ne 
-pas toujours le placer dans un voisinage de la solution. 
+ Nous savons que le point initial a une importance primordiale dans l'algorithme, pour cette raison, ils ont choisi de ne
+pas toujours le placer dans un voisinage de la solution.
 Cette librairie va aussi me servir de r\'ef\'erence pour pouvoir \'evaluer si les gradients et hessiens calcul\'es par l'outil d\'evelopp\'e \`a partir de Tapenade \ref{sec:tapenade}
  sont exacts. En effet, pour chaque fonction, la libraire a \'et\'e traduite dans le langage scilab et il est possible de calculer les gradients
 et hessiens des fonctions.
@@ -917,7 +911,7 @@ et hessiens des fonctions.
 \subsection{Les routines en fortran; propri\'et\'es des fonctions}
 
 
-Pour $f_i : \mathbb{R}^n \rightarrow \mathbb{R}$ pour $i=1, \cdots ,n$, on cherche \`a r\'esoudre 
+Pour $f_i : \mathbb{R}^n \rightarrow \mathbb{R}$ pour $i=1, \cdots ,n$, on cherche \`a r\'esoudre
 $$\min \left\{\sum_{i=1}^{m}f_i^2(x):x \in \mathbb{R}^n \right\} $$
 
 Chaque routine fournit le vecteur $f(x)$, le scalaire $f(x)^Tf(x)$, la jacobienne de $f$, et le gradient qui est calcul\'e par
@@ -1031,7 +1025,7 @@ entre parenth\`eses sont les variables de dimension modifiable.
 
 
 }
-% Les algorithmes de convergence d\'ependent beaucoup du point initial choisi. 
+% Les algorithmes de convergence d\'ependent beaucoup du point initial choisi.
 
 
 
@@ -1044,21 +1038,21 @@ entre parenth\`eses sont les variables de dimension modifiable.
 % pour la fonction discr\`ete \`a valeurs finies.
 % On n'exploite pas le fait que la matrice soit creuse mais les coûts de calculs seront probablement
 % diminu\'es quand même car les op\'erations seront faites sur des z\'eros.
-% 
-% 
-% 
+%
+%
+%
 % \begin{figure}
 % \caption{Matrice hessienne de la fonction disc\`ete \`a valeurs finies (28)}
 % \center
 % \includegraphics[scale=0.7]{figures/bound.png}
 % \label{fig:bound}
 % \end{figure}
-% 
-% Nous allons pr\'esenter trois exemples de fonction appartenant \`a la librairie; la fonction bien connue Rosenbrock, g\'en\'eralis\'ee \`a dimension variable, 
+%
+% Nous allons pr\'esenter trois exemples de fonction appartenant \`a la librairie; la fonction bien connue Rosenbrock, g\'en\'eralis\'ee \`a dimension variable,
 % une fonction trigonom\'etrique et une fonction utilisant les polynômes de Chebychev.
-% 
-% 
-% 
+%
+%
+%
 % Comme les polynômes sont de plus en plus compliqu\'es \`a calculer quand la dimension augmente, le coût de $f$
 % ne va pas être lin\'eaire par rapport \`a $n$.
 
@@ -1070,7 +1064,7 @@ entre parenth\`eses sont les variables de dimension modifiable.
 Maintenant que nous avons pr\'esent\'e les algorithmes, nous pouvons mieux pr\'eciser les objectifs du pr\'esent travail.
 Le but est d'adapter une libraire sous scilab et d'être capable de fournir les d\'eriv\'ees des fonctions qui v\'erifient
 les complexit\'es expos\'ees en \ref{chap1:ordre}.
-La difficult\'e des m\'ethodes r\'eside dans l'ensemble des op\'erations critiques : 
+La difficult\'e des m\'ethodes r\'eside dans l'ensemble des op\'erations critiques :
 \begin{itemize}
 \item $\nabla f(x)$
 \item $\nabla f(x)\cdot u$
@@ -1083,11 +1077,11 @@ La difficult\'e des m\'ethodes r\'eside dans l'ensemble des op\'erations critiqu
 \item r\'esolution du syst\`eme $LDL^Tx =b$
 \end{itemize}
 
-Nous voulons exploiter au mieux l'utilisation de DA afin d'obtenir des temps de calcul raisonnable pour les d\'eriv\'ees. 
+Nous voulons exploiter au mieux l'utilisation de DA afin d'obtenir des temps de calcul raisonnable pour les d\'eriv\'ees.
 De plus, il faut aussi pouvoir obtenir la d\'ecomposition de Cholesky modifi\'ee et être capable de r\'esoudre des syst\`emes triangulaires de mani\`ere
 efficace sinon le gain ne servira \`a rien.
- Nous allons analyser les processus de la diff\'erentiation automatique dans 
-l'obtention des d\'eriv\'ees. Nous verrons ainsi qu'il existe deux modes bien distincts pour les calculs et diff\'erentes techniques 
+ Nous allons analyser les processus de la diff\'erentiation automatique dans
+l'obtention des d\'eriv\'ees. Nous verrons ainsi qu'il existe deux modes bien distincts pour les calculs et diff\'erentes techniques
 d'impl\'ementation. Puis, nous d\'etaillerons les choix au niveau des outils et des librairies pour les op\'erations critiques et leurs tests.
  Enfin, nous observerons les r\'esultats obtenus pour les temps d'ex\'ecution et l'efficacit\'e des m\'ethodes.
 
