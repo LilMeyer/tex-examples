@@ -1,14 +1,7 @@
 
-# Convert : The -density option will change the resolution image
-
 graph:
 	lualatex -output-directory=graph graph/graph.tex
 	convert -density 80 graph/graph.pdf -quality 100 graph/graph.png
-
-
-
-# http://tex.stackexchange.com/questions/34054/tex-to-image-over-command-line
-# pdflatex "\def\formula{E=\frac{m_1v^2}{2}}\input{formula.tex}"
 
 formula2png:
 	pdflatex -output-directory=formula2png formula2png/ex1.tex
@@ -17,6 +10,9 @@ formula2png:
 # pdflatex -output-directory=multiple-tikz-figures -shell-escape multiple-tikz-figures/main
 multiple-tikz-figures:
 	cd multiple-tikz-figures && pdflatex -shell-escape main && cd ..
+
+letter:
+	pdflatex -output-directory=letter letter/main.tex
 
 favicons:
 	rm -f favicons/figures/*
@@ -33,4 +29,4 @@ favicons:
 test:
 	convert favicons/figures/figure_1.png -define icon:auto-resize=32 favicon.ico
 
-.PHONY: graph formula2png multiple-tikz-figures favicons test
+.PHONY: graph formula2png multiple-tikz-figures favicons test letter
